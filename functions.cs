@@ -29,8 +29,17 @@ namespace setup_server
             string new_session_id = functions.get_random_set_of_symb(8);
             List<string> new_player_id_aka_ticket = new List<string>(_count);
             List<string> player_old_tickets = new List<string>(_count);
+            int game_type_id = 0;
 
-            Console.WriteLine("started organazing PVP!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+            switch(_count)
+            {
+                case 2:
+                    game_type_id = 1; //type of PVP - 1vs1
+                    break;
+            }
+
+
+            //Console.WriteLine("started organazing PVP!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 
             try
             {
@@ -56,7 +65,7 @@ namespace setup_server
                 }
 
                 //send data to gamehub1 to create start table
-                string send_table_data = $"0~5~{starter.InnerServerConnectionPassword}~CREATE TABLE `{new_session_id}` (`player_order` int(11), `player_id` varchar(10), `player_name` varchar(20),`player_class` tinyint(4),`connection_number` varchar(25),`team_id` int(1),`zone_type` tinyint(2),`position_x` float,`position_y` float,`position_z` float,`rotation_x` float,`rotation_y` float,`rotation_z` float,`speed` float,`animation_id` tinyint(2),`conditions` varchar(255),`health_pool` varchar(13),`energy` float,`health_regen` float,`energy_regen` float,`weapon_attack` varchar(10),`hit_power` float,`armor` float,`shield_block` float,`magic_resistance` float,`dodge` float,`cast_speed` float,`melee_crit` float,`magic_crit` float,`spell_power` float,`spell1` smallint(6),`spell2` smallint(6),`spell3` smallint(6),`spell4` smallint(6),`spell5` smallint(6),`spell6` smallint(6),`hidden_conds` varchar(255),`global_button_cooldown` tinyint(2)) ENGINE = InnoDB DEFAULT CHARSET = utf8; ";
+                string send_table_data = $"0~5~{starter.InnerServerConnectionPassword}~CREATE TABLE `{new_session_id}` (`player_order` int(11), `player_id` varchar(10), `player_name` varchar(20),`player_class` tinyint(4),`connection_number` varchar(25),`team_id` int(1), `game_type_id` int(1),`zone_type` tinyint(2),`position_x` float,`position_y` float,`position_z` float,`rotation_x` float,`rotation_y` float,`rotation_z` float,`speed` float,`animation_id` tinyint(2),`conditions` varchar(255),`health_pool` varchar(13),`energy` float,`health_regen` float,`energy_regen` float,`weapon_attack` varchar(10),`hit_power` float,`armor` float,`shield_block` float,`magic_resistance` float,`dodge` float,`cast_speed` float,`melee_crit` float,`magic_crit` float,`spell_power` float,`spell1` smallint(6),`spell2` smallint(6),`spell3` smallint(6),`spell4` smallint(6),`spell5` smallint(6),`spell6` smallint(6),`hidden_conds` varchar(255),`global_button_cooldown` tinyint(2)) ENGINE = InnoDB DEFAULT CHARSET = utf8; ";
                 string res_creating_table = Server.SendAndGetTCP_between_servers(send_table_data, starter.GameServerPort, starter.GameServerHUB1, true);
 
                 //send data to gamehub1 to add players data
@@ -67,7 +76,7 @@ namespace setup_server
                 {
                     if (i > 0) { send_players_data = send_players_data + ","; }
 
-                    send_players_data = send_players_data + $" ('{(i+1)}', '{new_player_id_aka_ticket[i]}','{char_n[i].GetValue(0)}','{char_n[i].GetValue(1)}','0','{i}','{zone_type}',2,0,2,0,0,0,'{char_d[i].GetValue(1)}',0,'','{char_d[i].GetValue(2)}={char_d[i].GetValue(2)}',100,'{char_d[i].GetValue(3)}','{char_d[i].GetValue(4)}','{char_d[i].GetValue(5)}','{char_d[i].GetValue(6)}','{char_d[i].GetValue(7)}','{char_d[i].GetValue(8)}','{char_d[i].GetValue(9)}','{char_d[i].GetValue(10)}','{char_d[i].GetValue(11)}','{char_d[i].GetValue(12)}','{char_d[i].GetValue(13)}','{char_d[i].GetValue(14)}','{char_d[i].GetValue(15)}','{char_d[i].GetValue(16)}','{char_d[i].GetValue(17)}','{char_d[i].GetValue(18)}','{char_d[i].GetValue(19)}',997,'{char_d[i].GetValue(21)}',0)";
+                    send_players_data = send_players_data + $" ('{(i+1)}', '{new_player_id_aka_ticket[i]}','{char_n[i].GetValue(0)}','{char_n[i].GetValue(1)}','0','{i}','{game_type_id}','{zone_type}',2,0,2,0,0,0,'{char_d[i].GetValue(1)}',0,'','{char_d[i].GetValue(2)}={char_d[i].GetValue(2)}',100,'{char_d[i].GetValue(3)}','{char_d[i].GetValue(4)}','{char_d[i].GetValue(5)}','{char_d[i].GetValue(6)}','{char_d[i].GetValue(7)}','{char_d[i].GetValue(8)}','{char_d[i].GetValue(9)}','{char_d[i].GetValue(10)}','{char_d[i].GetValue(11)}','{char_d[i].GetValue(12)}','{char_d[i].GetValue(13)}','{char_d[i].GetValue(14)}','{char_d[i].GetValue(15)}','{char_d[i].GetValue(16)}','{char_d[i].GetValue(17)}','{char_d[i].GetValue(18)}','{char_d[i].GetValue(19)}',997,'{char_d[i].GetValue(21)}',0)";
 
                     if (i == (_count - 1)) { send_players_data = send_players_data + ";"; }
                 }
@@ -97,6 +106,15 @@ namespace setup_server
                     }
                     Console.WriteLine(player_old_tickets.Count + " - dimention");
                     Task.Run(() => CheckForStartingGameSession(player_old_tickets, sess_ty));
+
+                    StringBuilder list_of_chars = new StringBuilder();
+
+                    for (int i = 0; i < _count; i++)
+                    {
+                        list_of_chars.Append(char_n[i] + ", ");
+                    }
+
+                    Console.WriteLine(DateTime.Now + ": started organazing PVP for " + list_of_chars);
                 }
             }
             catch (Exception ex)

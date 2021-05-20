@@ -158,7 +158,7 @@ namespace setup_server
 
 
                 //implement spells in row
-                //3~5~ticket~character~new talents
+                //3~5~ticket~character~new spells
                 if (packet_data.Length == 5 && (packet_data[0] + packet_data[1]) == "35")
                 {
 
