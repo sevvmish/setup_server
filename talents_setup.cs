@@ -32,10 +32,11 @@ namespace setup_server
         public string hidden_conds;
         public string spell_book;
         public string talents;
+        int character_type;
 
         public talents_setup base_player;
         
-        public talents_setup(params string[] data)
+        public talents_setup(string _talents, int char_type, params string[] data)
         {
             speed = float.Parse(data[0]);
             health = float.Parse(data[1]);
@@ -62,7 +63,8 @@ namespace setup_server
             //talents = data[22];
             hidden_conds = "";
             spell_book = "";
-            talents = "";
+            talents = _talents;
+            character_type = char_type;
         }
 
         public string prepare_to_update_sql(string char_name)

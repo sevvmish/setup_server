@@ -133,16 +133,16 @@ namespace setup_server
                         return $"3~4~eit";
                     }
 
-                    
-                    string[,] get_pl_data = mysql.GetMysqlSelect($"SELECT `speed`, `health`, `health_regen`, `energy_regen`, `weapon_attack`, `hit_power`, `armor`, `shield_block`, `magic_resistance`, `dodge`, `cast_speed`, `melee_crit`, `magic_crit`, `spell_power`, `spell1`, `spell2`, `spell3`, `spell4`, `spell5`, `spell6`, `hidden_conds`, `spell_book`, `talents` FROM `character_types` WHERE `character_type`=(SELECT `character_type` FROM `characters` WHERE `character_name`='{packet_data[3]}')").Result;
+                    string[,] what_type_char = mysql.GetMysqlSelect($"SELECT `character_type` FROM `characters` WHERE `character_name`= '{packet_data[3]}'").Result;
+                    string[,] get_pl_data = mysql.GetMysqlSelect($"SELECT `speed`, `health`, `health_regen`, `energy_regen`, `weapon_attack`, `hit_power`, `armor`, `shield_block`, `magic_resistance`, `dodge`, `cast_speed`, `melee_crit`, `magic_crit`, `spell_power`, `spell1`, `spell2`, `spell3`, `spell4`, `spell5`, `spell6`, `hidden_conds`, `spell_book`, `talents` FROM `character_types` WHERE `character_type`='{what_type_char[0,0]}'").Result;
 
                     List<string> temp_data = new List<string>();
                     for (int i = 0; i < get_pl_data.GetLength(1); i++)
                     {
                         temp_data.Add(get_pl_data[0,i]);
                     }
-                    talents_setup new_player_data = new talents_setup(temp_data.ToArray());
-                    new_player_data.talents = packet_data[4];
+                    talents_setup new_player_data = new talents_setup(packet_data[4], int.Parse(what_type_char[0,0]), temp_data.ToArray());
+                    //new_player_data.talents = packet_data[4];
 
                     
                     bool creating_result = mysql.ExecuteSQLInstruction(new_player_data.prepare_to_update_sql(packet_data[3])).Result;

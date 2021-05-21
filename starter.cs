@@ -23,13 +23,14 @@ namespace setup_server
         //game servers
         public static int GameServerPort = 2323;
         public static string GameServerHUB1 = "127.0.0.1";  //45.67.57.30 //192.168.0.103
-
+        public static string GameServerHUB2 = "127.0.0.1";  //45.67.57.30 //192.168.0.103
+        //... ... .... .... 
 
         static void Main(string[] args)
         {
-            stopWatch.Start();
+            stopWatch.Start(); 
             data_config.Init_data_config();
-            
+
             //packet_analyzer.test();
 
             Server.Server_init_TCP();

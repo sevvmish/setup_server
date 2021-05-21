@@ -333,5 +333,20 @@ namespace setup_server
 
         }
 
+        public static int [] CheckAllGameHubs()
+        {
+            int[] result = new int[2];
+            result[0] = -1;
+            
+            //HUB1
+            string [] hub1_result = Server.SendAndGetTCP_between_servers("0~7~ok", starter.GameServerPort, starter.GameServerHUB1, false).Split('~');            
+            if ((hub1_result[0] + hub1_result[1] + hub1_result[2]) == "07ok")
+            {
+                result[1] = int.Parse(hub1_result[3]);
+            }
+
+            return result;
+        }
+
     }
 }
