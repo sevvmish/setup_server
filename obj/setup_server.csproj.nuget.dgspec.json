@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\android\\non-android projects\\setup_server\\setup_server.csproj": {}
+    "D:\\NONandroid\\setup_server\\setup_server.csproj": {}
   },
   "projects": {
-    "C:\\android\\non-android projects\\setup_server\\setup_server.csproj": {
+    "D:\\NONandroid\\setup_server\\setup_server.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\android\\non-android projects\\setup_server\\setup_server.csproj",
+        "projectUniqueName": "D:\\NONandroid\\setup_server\\setup_server.csproj",
         "projectName": "setup_server",
-        "projectPath": "C:\\android\\non-android projects\\setup_server\\setup_server.csproj",
-        "packagesPath": "C:\\Users\\krivtsovk\\.nuget\\packages\\",
-        "outputPath": "C:\\android\\non-android projects\\setup_server\\obj\\",
+        "projectPath": "D:\\NONandroid\\setup_server\\setup_server.csproj",
+        "packagesPath": "C:\\Users\\darkysha\\.nuget\\packages\\",
+        "outputPath": "D:\\NONandroid\\setup_server\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\krivtsovk\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\darkysha\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -40,17 +40,13 @@
         "net5.0": {
           "targetAlias": "net5.0",
           "dependencies": {
-            "MySqlClient": {
-              "target": "Package",
-              "version": "[5.4.2, )"
-            },
             "MySqlConnector": {
               "target": "Package",
-              "version": "[1.3.3, )"
+              "version": "[1.3.11, )"
             },
             "NetCoreServer": {
               "target": "Package",
-              "version": "[5.0.15, )"
+              "version": "[5.1.0, )"
             },
             "Portable.BouncyCastle": {
               "target": "Package",
@@ -72,7 +68,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.203\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.301\\RuntimeIdentifierGraph.json"
         }
       }
     }
