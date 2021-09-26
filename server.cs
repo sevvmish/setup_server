@@ -168,7 +168,7 @@ namespace setup_server
 
                 if (is_it_encoded)
                 {
-                    encryption.Encode(ref data_to_s, starter.secret_key_for_game_servers);
+                    encryption.Encode(ref data_to_s, data_config.secret_key_for_game_servers().Result);
                 }
 
                 sck_tcp.Send(data_to_s);
@@ -212,7 +212,7 @@ namespace setup_server
                     {
                         data_r[i] = msgBuff[i];
                     }
-                    encryption.Decode(ref data_r, starter.secret_key_for_game_servers);
+                    encryption.Decode(ref data_r, data_config.secret_key_for_game_servers().Result);
                     messrec.Clear();
                     messrec.Append(Encoding.UTF8.GetString(data_r, 0, data_r.Length));
                 }

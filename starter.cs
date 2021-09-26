@@ -13,9 +13,9 @@ namespace setup_server
         public const int charname_min_lenth = 6;
         public const int charname_max_lenth = 16;
 
-        public static byte[] secret_key_for_game_servers;
-        public static string InnerServerConnectionPassword;
-        public static string MysqlConnectionData_login;
+        //public static byte[] secret_key_for_game_servers;
+        //public static string InnerServerConnectionPassword;
+        //public static string MysqlConnectionData_login;
         public static string address_for_data_config = @"C:\android\data";
 
         public static Stopwatch stopWatch = new Stopwatch();
@@ -28,10 +28,10 @@ namespace setup_server
 
         static void Main(string[] args)
         {
-            stopWatch.Start(); 
-            data_config.Init_data_config();
-
+            stopWatch.Start();
+            //data_config.Init_data_config();
             //packet_analyzer.test();
+            
 
             Server.Server_init_TCP();
 

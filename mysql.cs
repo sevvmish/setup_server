@@ -20,7 +20,7 @@ namespace setup_server
 
             try
             {
-                MySqlConnection conn = new MySqlConnection(starter.MysqlConnectionData_login);
+                MySqlConnection conn = new MySqlConnection(data_config.MysqlConnectionData_login().Result);
                 await conn.OpenAsync();
 
                 MySqlCommand command = new MySqlCommand(sql, conn);
@@ -74,7 +74,7 @@ namespace setup_server
 
             try
             {
-                MySqlConnection conn = new MySqlConnection(starter.MysqlConnectionData_login);
+                MySqlConnection conn = new MySqlConnection(data_config.MysqlConnectionData_login().Result);
                 await conn.OpenAsync();
 
                 MySqlCommand command = new MySqlCommand(sql, conn);
