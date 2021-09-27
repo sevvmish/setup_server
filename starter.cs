@@ -13,26 +13,23 @@ namespace setup_server
         public const int charname_min_lenth = 6;
         public const int charname_max_lenth = 16;
 
-        //public static byte[] secret_key_for_game_servers;
-        //public static string InnerServerConnectionPassword;
-        //public static string MysqlConnectionData_login;
+        public static byte[] secret_key_for_game_servers;
+        public static string InnerServerConnectionPassword;
+        public static string MysqlConnectionData_login;
         public static string address_for_data_config = @"C:\android\data";
 
         public static Stopwatch stopWatch = new Stopwatch();
 
         //game servers
-        public static int GameServerPort = 2323;
-        public static string GameServerHUB1 = "127.0.0.1";  //45.67.57.30 //192.168.0.103
-        public static string GameServerHUB2 = "127.0.0.1";  //45.67.57.30 //192.168.0.103
-        //... ... .... .... 
+        public static int GameServerPort = 2323;       
+        public static Dictionary<string, string> GameServerHUBs = new Dictionary<string, string>();
+        
 
         static void Main(string[] args)
         {
             stopWatch.Start();
-            //data_config.Init_data_config();
-            //packet_analyzer.test();
-            
-
+            data_config.Init_data_config();
+          
             Server.Server_init_TCP();
 
             Console.ReadKey();

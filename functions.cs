@@ -60,16 +60,22 @@ namespace setup_server
                         temp1[ii] = char_n_[0, ii];
                     }
                     char_n.Add(temp1);
+                    
                     new_player_id_aka_ticket.Add(functions.get_random_set_of_symb(8));
                     player_old_tickets.Add(functions.GetTicketByCharID(_char_id[i]));                    
                 }
 
                 //send data to gamehub1 to create start table
-                string send_table_data = $"0~5~{data_config.InnerServerConnectionPassword().Result}~CREATE TABLE `{new_session_id}` (`player_order` int(11), `player_id` varchar(10), `player_name` varchar(20),`player_class` tinyint(4),`connection_number` varchar(25),`team_id` int(1), `game_type_id` int(1),`zone_type` tinyint(2),`position_x` float,`position_y` float,`position_z` float,`rotation_x` float,`rotation_y` float,`rotation_z` float,`speed` float,`animation_id` tinyint(2),`conditions` varchar(255),`health_pool` varchar(13),`energy` float,`health_regen` float,`energy_regen` float,`weapon_attack` varchar(10),`hit_power` float,`armor` float,`shield_block` float,`magic_resistance` float,`dodge` float,`cast_speed` float,`melee_crit` float,`magic_crit` float,`spell_power` float,`spell1` smallint(6),`spell2` smallint(6),`spell3` smallint(6),`spell4` smallint(6),`spell5` smallint(6),`spell6` smallint(6),`hidden_conds` varchar(255),`global_button_cooldown` tinyint(2)) ENGINE = InnoDB DEFAULT CHARSET = utf8; ";
-                string res_creating_table = Server.SendAndGetTCP_between_servers(send_table_data, starter.GameServerPort, starter.GameServerHUB1, true);
+                string send_table_data = $"0~5~{starter.InnerServerConnectionPassword}~CREATE TABLE `{new_session_id}` (`player_order` int(11), `player_id` varchar(10), `player_name` varchar(20),`player_class` tinyint(4),`connection_number` varchar(25),`team_id` int(1), `game_type_id` int(1),`zone_type` tinyint(2),`position_x` float,`position_y` float,`position_z` float,`rotation_x` float,`rotation_y` float,`rotation_z` float,`speed` float,`animation_id` tinyint(2),`conditions` varchar(255),`health_pool` varchar(13),`energy` float,`health_regen` float,`energy_regen` float,`weapon_attack` varchar(10),`hit_power` float,`armor` float,`shield_block` float,`magic_resistance` float,`dodge` float,`cast_speed` float,`melee_crit` float,`magic_crit` float,`spell_power` float,`spell1` smallint(6),`spell2` smallint(6),`spell3` smallint(6),`spell4` smallint(6),`spell5` smallint(6),`spell6` smallint(6),`hidden_conds` varchar(255),`global_button_cooldown` tinyint(2)) ENGINE = InnoDB DEFAULT CHARSET = utf8; ";
+                
+                //CHECK IT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                string res_creating_table = Server.SendAndGetTCP_between_servers(send_table_data, starter.GameServerPort, starter.GameServerHUBs["HUB_2"], true);
+                Console.WriteLine(res_creating_table + " =========================!");
 
                 //send data to gamehub1 to add players data
-                string send_players_data = $"0~5~{data_config.InnerServerConnectionPassword().Result}~INSERT INTO `{new_session_id}` VALUES";
+                string send_players_data = $"0~5~{starter.InnerServerConnectionPassword}~INSERT INTO `{new_session_id}` VALUES";
+                
+
                 int zone_type = 1;
 
                 for (int i = 0; i < _count; i++)
@@ -81,11 +87,14 @@ namespace setup_server
                     if (i == (_count - 1)) { send_players_data = send_players_data + ";"; }
                 }
 
-                string res_sending_players_data = Server.SendAndGetTCP_between_servers(send_players_data, starter.GameServerPort, starter.GameServerHUB1, true);
+                //CHECK IT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                string res_sending_players_data = Server.SendAndGetTCP_between_servers(send_players_data, starter.GameServerPort, starter.GameServerHUBs["HUB_2"], true);
+                Console.WriteLine(send_players_data + " =========================!");
 
                 //send data to start this session
-                string res_starting_new_session = Server.SendAndGetTCP_between_servers($"0~2~{data_config.InnerServerConnectionPassword().Result}~{new_session_id}", starter.GameServerPort, starter.GameServerHUB1, true);
-
+                //CHECK IT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                string res_starting_new_session = Server.SendAndGetTCP_between_servers($"0~2~{starter.InnerServerConnectionPassword}~{new_session_id}", starter.GameServerPort, starter.GameServerHUBs["HUB_2"], true);
+                
 
                 //preparing awaiting
                 if (res_creating_table=="0~5~ok" && res_sending_players_data== "0~5~ok" && res_starting_new_session=="0~2~1")
@@ -112,15 +121,23 @@ namespace setup_server
                     for (int i = 0; i < _count; i++)
                     {
                         list_of_chars.Append(char_n[i] + ", ");
+                        
                     }
 
                     Console.WriteLine(DateTime.Now + ": started organazing PVP for " + list_of_chars);
+                } 
+                else
+                {
+                                        
                 }
             }
             catch (Exception ex)
             {
+               
                 Console.WriteLine("==============ERROR================\n" + ex + "\n" + DateTime.Now + "\n" + "==================ERROR_END===========\n");
             }
+
+
         }
 
         public async static void CheckForStartingGameSession(List<string> _tickets, string session_type_id)
@@ -337,9 +354,11 @@ namespace setup_server
         {
             int[] result = new int[2];
             result[0] = -1;
-            
+
             //HUB1
-            string [] hub1_result = Server.SendAndGetTCP_between_servers("0~7~ok", starter.GameServerPort, starter.GameServerHUB1, false).Split('~');            
+            //CHECK IT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            string [] hub1_result = Server.SendAndGetTCP_between_servers("0~7~ok", starter.GameServerPort, starter.GameServerHUBs["HUB_2"], false).Split('~');            
+            
             if ((hub1_result[0] + hub1_result[1] + hub1_result[2]) == "07ok")
             {
                 result[1] = int.Parse(hub1_result[3]);

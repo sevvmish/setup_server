@@ -10,9 +10,33 @@ namespace setup_server
 {
     class data_config
     {
-        //public static byte[] secret_key_for_game_servers;
-        //public static string InnerServerConnectionPassword;
-        //public static string MysqlConnectionData_login;
+        public static async void Init_data_config()
+        {
+            using (FileStream fs = new FileStream(starter.address_for_data_config, FileMode.OpenOrCreate))
+            {
+                data_config_json Data = await JsonSerializer.DeserializeAsync<data_config_json>(fs);
+                starter.secret_key_for_game_servers = GetByteArrFromStringComma(Data.secret_key_for_game_servers);
+                starter.InnerServerConnectionPassword = Data.InnerServerConnectionPassword;
+                starter.MysqlConnectionData_login = Data.mysql_server_data;
+                starter.GameServerHUBs = Data.GameHubs;
+            }
+        }
+
+        public static byte[] GetByteArrFromStringComma(string key_in_string)
+        {
+            List<byte> result = new List<byte>();
+
+            string[] _data = key_in_string.Split(',');
+
+            for (int i = 0; i < _data.Length; i++)
+            {
+                result.Add(Byte.Parse(_data[i]));
+            }
+
+            return result.ToArray();
+        }
+
+        /*
         public static byte[] GetByteArrFromStringComma(string key_in_string)
         {
             List<byte> result = new List<byte>();
@@ -31,7 +55,7 @@ namespace setup_server
         {
             byte[] result;
 
-            using (FileStream fs = new FileStream(starter.address_for_data_config, FileMode.OpenOrCreate))
+            using (FileStream fs = new FileStream(starter.address_for_data_config, FileMode.Open))
             {
                 data_config_json Data = await JsonSerializer.DeserializeAsync<data_config_json>(fs);
                 result = GetByteArrFromStringComma(Data.secret_key_for_game_servers);
@@ -46,7 +70,7 @@ namespace setup_server
             string result = null;
 
 
-            using (FileStream fs = new FileStream(starter.address_for_data_config, FileMode.OpenOrCreate))
+            using (FileStream fs = new FileStream(starter.address_for_data_config, FileMode.Open))
             {
                 data_config_json Data = await JsonSerializer.DeserializeAsync<data_config_json>(fs);
                 result = Data.InnerServerConnectionPassword;
@@ -60,7 +84,7 @@ namespace setup_server
         {
             string result = null;
 
-            using (FileStream fs = new FileStream(starter.address_for_data_config, FileMode.OpenOrCreate))
+            using (FileStream fs = new FileStream(starter.address_for_data_config, FileMode.Open))
             {
                 data_config_json Data = await JsonSerializer.DeserializeAsync<data_config_json>(fs);
                 result = Data.mysql_server_data;
@@ -69,16 +93,27 @@ namespace setup_server
             return result;
         }
 
+        public static async void RefreshGameHubs()
+        {
+           
+            using (FileStream fs = new FileStream(starter.address_for_data_config, FileMode.Open))
+            {
+                data_config_json Data = await JsonSerializer.DeserializeAsync<data_config_json>(fs);
+                starter.GameServerHUBs = Data.GameHubs;                
+            }
+                       
+                        
+        }
+        */
 
 
-
-        struct data_config_json
+        class data_config_json
         {
             public string mysql_server_data { get; set; }
             public string secret_key_for_game_servers { get; set; }
             public string InnerServerConnectionPassword { get; set; }
 
-
+            public Dictionary<string, string> GameHubs { get; set; } //hub name, hub IP
         }
 
     }
