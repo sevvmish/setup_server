@@ -76,11 +76,11 @@ namespace setup_server
                         return $"3~1~eit";
                     }
 
-                    if (Server.PlayersAwaiting.ContainsKey(char_id[0, 0]) && !Server.PlayersAwaiting[char_id[0, 0]].isPlayerBusyForSession())
+                    if (Server.PlayersAwaiting.ContainsKey(char_id[0, 0]))
                     {
-                        Server.PlayersAwaiting.Remove(char_id[0, 0]);
-                        Console.WriteLine(DateTime.Now + $": player {packet_data[3]} removed from any queues, to user from - " + endpoint_address);
-                        return $"3~10~out";
+                        
+                        Console.WriteLine(DateTime.Now + $": player {packet_data[3]} allready in queue for PVP, to user from - " + endpoint_address);
+                        return $"3~1~aiq";
                     }
                     
 
@@ -90,7 +90,7 @@ namespace setup_server
                         string[,] PVPraiting = mysql.GetMysqlSelect($"SELECT `character_pvp_rait` FROM `character_raiting` WHERE `character_id`='{char_id[0, 0]}'").Result;
                         if (PVPraiting[0, 0] == "error") PVPraiting[0, 0] = "0";
                         Server.PlayersAwaiting.Add(char_id[0, 0], new PlayerForGameSession(char_id[0, 0], packet_data[3], packet_data[2], GameTypes.PvP_1vs1, int.Parse(PVPraiting[0, 0])));
-                        return $"3~1~in~1";
+                        return $"3~1~ok";
                     }
                                
                 }
@@ -279,7 +279,7 @@ namespace setup_server
                     }
                                         
 
-                    //get character id and update pvp1vs1 datetime in queue OR stop queue if no such char in 1vs1pvp queue
+                    //get character id and update datetime in queue OR stop queue if no such char in 1vs1pvp queue
                     string[,] get_char_id = mysql.GetMysqlSelect($"SELECT `character_id` FROM `characters` WHERE `character_name`='{packet_data[3]}'").Result;
                     if (get_char_id.GetLength(0) != 1)
                     {
@@ -389,18 +389,6 @@ namespace setup_server
         }
 
 
-        public static string ResetAllPVPQueues(string _char_ID)
-        {
-            bool del_char_name = mysql.ExecuteSQLInstruction($"DELETE FROM `session_queue` WHERE `character_id`='{_char_ID}' ").Result;
-            if (!del_char_name)
-            {                
-                return $"3~1~dbe";
-            }
-            else
-            {                
-                return $"3~10~out";
-            }
-        }
 
         public static void CheckPVP1()
         {

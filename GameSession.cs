@@ -86,6 +86,12 @@ namespace setup_server
             
             try
             {
+
+                //get hub_ip for game:
+                Server.CheckGameHubs();
+                string Game_hub_IP = Server.GetGameHub();
+
+
                 for (int i = 0; i < _count; i++)
                 {
                     string[,] char_d_ = mysql.GetMysqlSelect($"SELECT * FROM `character_property` WHERE `character_id`='{_char_id[i]}' ").Result;
@@ -109,15 +115,18 @@ namespace setup_server
                     new_player_id_aka_ticket.Add(_new_tickets);
                     CurrentPlayers[i].SetNewTicketForPlayer(_new_tickets);
                     CurrentPlayers[i].SetNewSession(new_session_id);
+                    CurrentPlayers[i].SetGameHub(Game_hub_IP);
                     //player_old_tickets.Add(CurrentPlayers[i].GetCharacterTicket());
 
                 }
+
+                
 
                 //send data to gamehub1 to create start table
                 string send_table_data = $"0~5~{starter.InnerServerConnectionPassword}~CREATE TABLE `{new_session_id}` (`player_order` int(11), `player_id` varchar(10), `player_name` varchar(20),`player_class` tinyint(4),`connection_number` varchar(25),`team_id` int(1), `game_type_id` int(1),`zone_type` tinyint(2),`position_x` float,`position_y` float,`position_z` float,`rotation_x` float,`rotation_y` float,`rotation_z` float,`speed` float,`animation_id` tinyint(2),`conditions` varchar(255),`health_pool` varchar(13),`energy` float,`health_regen` float,`energy_regen` float,`weapon_attack` varchar(10),`hit_power` float,`armor` float,`shield_block` float,`magic_resistance` float,`dodge` float,`cast_speed` float,`melee_crit` float,`magic_crit` float,`spell_power` float,`spell1` smallint(6),`spell2` smallint(6),`spell3` smallint(6),`spell4` smallint(6),`spell5` smallint(6),`spell6` smallint(6),`hidden_conds` varchar(255),`global_button_cooldown` tinyint(2)) ENGINE = InnoDB DEFAULT CHARSET = utf8; ";
 
                 //CHECK IT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                string res_creating_table = Server.SendAndGetTCP_between_servers(send_table_data, starter.GameServerPort, starter.GameServerHUBs["HUB_2"], true);
+                string res_creating_table = Server.SendAndGetTCP_between_servers(send_table_data, starter.GameServerPort, Game_hub_IP, true);
                 //Console.WriteLine(res_creating_table + " =========================!");
 
                 //send data to gamehub1 to add players data
@@ -134,12 +143,12 @@ namespace setup_server
                 }
 
                 //CHECK IT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                string res_sending_players_data = Server.SendAndGetTCP_between_servers(send_players_data, starter.GameServerPort, starter.GameServerHUBs["HUB_2"], true);
+                string res_sending_players_data = Server.SendAndGetTCP_between_servers(send_players_data, starter.GameServerPort, Game_hub_IP, true);
                 //Console.WriteLine(send_players_data + " =========================!");
 
                 //send data to start this session
                 //CHECK IT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                string res_starting_new_session = Server.SendAndGetTCP_between_servers($"0~2~{starter.InnerServerConnectionPassword}~{new_session_id}", starter.GameServerPort, starter.GameServerHUBs["HUB_2"], true);
+                string res_starting_new_session = Server.SendAndGetTCP_between_servers($"0~2~{starter.InnerServerConnectionPassword}~{new_session_id}", starter.GameServerPort, Game_hub_IP, true);
 
 
                 //preparing awaiting

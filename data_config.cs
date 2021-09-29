@@ -18,7 +18,13 @@ namespace setup_server
                 starter.secret_key_for_game_servers = GetByteArrFromStringComma(Data.secret_key_for_game_servers);
                 starter.InnerServerConnectionPassword = Data.InnerServerConnectionPassword;
                 starter.MysqlConnectionData_login = Data.mysql_server_data;
-                starter.GameServerHUBs = Data.GameHubs;
+                //starter.GameServerHUBs = Data.GameHubs;
+                Dictionary<string, string> temp = Data.GameHubs;
+
+                foreach (string keys in temp.Keys)
+                {
+                    starter.GameServerHUBs.Add(keys, new GameHubsSpec(temp[keys]));
+                }
             }
         }
 
@@ -115,6 +121,8 @@ namespace setup_server
 
             public Dictionary<string, string> GameHubs { get; set; } //hub name, hub IP
         }
+
+
 
     }
 }

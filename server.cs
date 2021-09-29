@@ -14,9 +14,12 @@ namespace setup_server
     {
         public static Dictionary<string, byte[]> Sessions = new Dictionary<string, byte[]>();
         public static Dictionary<string, DateTime> pvp1vs1 = new Dictionary<string, DateTime>();
-        public static Dictionary<string, Player_data> TemporaryDataForStartingGameSession = new Dictionary<string, Player_data>();
+        //public static Dictionary<string, Player_data> TemporaryDataForStartingGameSession = new Dictionary<string, Player_data>();
         public static Dictionary<string, PlayerForGameSession> PlayersAwaiting = new Dictionary<string, PlayerForGameSession>();
         public static HashSet<GameSessions> GameSessionsAwaiting = new HashSet<GameSessions>();
+
+        //gamehubs cheking
+
 
         //TCP        
         public static ManualResetEvent allDone = new ManualResetEvent(false);
@@ -318,115 +321,52 @@ namespace setup_server
             {
                 if (CurrentTime < starter.stopWatch.ElapsedMilliseconds)
                 {
-                    List<PlayerForGameSession> looking_for_2 = new List<PlayerForGameSession>();
-
-                    Console.WriteLine(GameSessionsAwaiting.Count + " !!!!!!!!!!!!!!!CCCCCCCCCCOOOOOOUUUUUUUUUUUNNNNNNNNNNTTTTTTTTTT");
-
-                    foreach (string keys in PlayersAwaiting.Keys)
+                    try
                     {
-                        //cleaning for old unupdated
-                        if (PlayersAwaiting[keys].WhenLastUpdated().AddSeconds(10) < DateTime.Now && !PlayersAwaiting[keys].isPlayerBusyForSession())
-                        {
-                            Console.WriteLine(DateTime.Now + ": removed from queue character - " + PlayersAwaiting[keys].GetCharacterName());
-                            PlayersAwaiting.Remove(keys);
-                        }
 
-                        
-                        if (!PlayersAwaiting[keys].isPlayerBusyForSession() && PlayersAwaiting[keys].GetPlayerGameType()==GameTypes.PvP_1vs1)
+                        List<PlayerForGameSession> looking_for_2 = new List<PlayerForGameSession>();
+
+                        Console.WriteLine(GameSessionsAwaiting.Count + " !!!!!!!!!!!!!!!CCCCCCCCCCOOOOOOUUUUUUUUUUUNNNNNNNNNNTTTTTTTTTT");
+
+                        foreach (string keys in PlayersAwaiting.Keys)
                         {
-                            looking_for_2.Add(PlayersAwaiting[keys]);
-                            if (looking_for_2.Count==2)
+                            //cleaning for old unupdated
+                            if (PlayersAwaiting[keys].WhenLastUpdated().AddSeconds(10) < DateTime.Now && !PlayersAwaiting[keys].isPlayerBusyForSession())
                             {
-                                GameSessionsAwaiting.Add(new GameSessions(looking_for_2));                                
-                                looking_for_2.Clear();
-                            }
-
-                            
-
-                        }
-
-
-
-                    }
-
-
-
-
-
-
-                    /*
-                    if (pvp1vs1.Count>1)
-                    {
-                        string[,] check_strings = null;
-
-                        try
-                        {
-                            check_strings = mysql.GetMysqlSelect($"SELECT `session_queue_id`, `character_id`, `character_pvp_rait` FROM `session_queue` WHERE `status`= '0' AND `session_type_id`= '1' ").Result;
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine("================ERROR===============\n" + ex+"\n"+ "================ERROR===============");
-                            return;
-                        }
-                        
-
-                        //Console.WriteLine(check_strings[0,0] + " - " + check_strings[0,1] + " - " + check_strings[0,2]);
-
-                        List<int> pvp_raits = new List<int>();
-                        for (int i = 0; i < check_strings.GetLength(0); i++)
-                        {
-                            pvp_raits.Add(int.Parse(check_strings[i,2]));
-                        }
-
-                        for (int i = 0; i < pvp_raits.Count; i++)
-                        {
-                            for (int ii = 0; ii < pvp_raits.Count; ii++)
-                            {
-                                if (i!=ii && pvp_raits[i]!=-1000 && pvp_raits[ii]!=-1000 && (Math.Abs(pvp_raits[i] - pvp_raits[ii])<5) && pvp1vs1.ContainsKey(check_strings[i, 1]) && pvp1vs1.ContainsKey(check_strings[ii, 1]))
+                                Console.WriteLine(DateTime.Now + ": removed from queue character - " + PlayersAwaiting[keys].GetCharacterName());
+                                if (looking_for_2.Contains(PlayersAwaiting[keys]))
                                 {
-                                    bool check1 = mysql.ExecuteSQLInstruction($"UPDATE `session_queue` SET `status`='1' WHERE `session_queue_id`='{check_strings[i, 0]}' ").Result;
-                                    bool check2 = mysql.ExecuteSQLInstruction($"UPDATE `session_queue` SET `status`='1' WHERE `session_queue_id`='{check_strings[ii, 0]}' ").Result;
-
-                                    if (check1 && check2)
-                                    {
-                                        List<string> temp = new List<string>(2);
-                                        temp.Add(check_strings[i, 1]);
-                                        temp.Add(check_strings[ii, 1]);
-                                        Task.Run(() => functions.OrganizePVP(2, temp));
-
-
-                                        pvp1vs1.Remove(check_strings[i, 1]);
-                                        pvp1vs1.Remove(check_strings[ii, 1]);
-                                        pvp_raits[i] = -1000;
-                                        pvp_raits[ii] = -1000;
-                                    }
+                                    looking_for_2.Remove(PlayersAwaiting[keys]);
                                 }
+                                PlayersAwaiting.Remove(keys);
                             }
-                        }
 
-                    }
 
-                    //check all DATATIME for old ones which idle
-                    //..................
-                    foreach (string item in pvp1vs1.Keys)
-                    {
-                        if (pvp1vs1[item].AddSeconds(30)<DateTime.Now)
-                        {
-                            bool del_char_name = mysql.ExecuteSQLInstruction($"DELETE FROM `session_queue` WHERE `character_id`='{item}'").Result;
-
-                            if (del_char_name)
+                            if (!PlayersAwaiting[keys].isPlayerBusyForSession() && PlayersAwaiting[keys].GetPlayerGameType() == GameTypes.PvP_1vs1)
                             {
-                                pvp1vs1.Remove(item);
-                                Console.WriteLine(item + " deletede from queue pvp1vs1");
+                                looking_for_2.Add(PlayersAwaiting[keys]);
+                                if (looking_for_2.Count == 2)
+                                {
+                                    GameSessionsAwaiting.Add(new GameSessions(looking_for_2));
+                                    looking_for_2.Clear();
+                                }
+
+
+
                             }
-                        } else
-                        {
-                            Console.WriteLine($"{pvp1vs1[item]} and +30 is {pvp1vs1[item].AddSeconds(30)} less then {DateTime.Now}");
+
+
+
                         }
+
+
+
                     }
-                    */
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex);
+                    }
                     
-                    //Console.WriteLine("tick" + starter.stopWatch.ElapsedMilliseconds);
 
                     CurrentTime += 2000;
                     if (CurrentTime > starter.stopWatch.ElapsedMilliseconds)
@@ -438,8 +378,60 @@ namespace setup_server
             }
         }
 
+        public static void CheckGameHubs()
+        {
+            foreach (string keys in starter.GameServerHUBs.Keys)
+            {
+                long _pre_ping = starter.stopWatch.ElapsedMilliseconds;
+                string result = null;
+
+                try
+                {
+                    result = Server.SendAndGetTCP_between_servers($"0~7~{starter.InnerServerConnectionPassword}", starter.GameServerPort, starter.GameServerHUBs[keys].GetIP(), true);
+                                
+                    long ping = starter.stopWatch.ElapsedMilliseconds - _pre_ping;
+
+                    if (result==null || result=="0~7~wp")
+                    {
+                        Console.WriteLine("ping server is 07wp");
+                        starter.GameServerHUBs[keys].SetnonActive();
+                    }
+                    else
+                    {
+                        string[] _data = result.Split('~');
+                        starter.GameServerHUBs[keys].SetSessions(int.Parse(_data[2]));
+
+                    }
+
+                    Console.WriteLine(result + ": " + starter.GameServerHUBs[keys].GetActiveState() + " - " + starter.GameServerHUBs[keys].GetIP() + " - " + starter.GameServerHUBs[keys].GetPing());
+
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex);
+                }
+            }
+        }
+
+        public static string GetGameHub()
+        {
+            foreach (string keys in starter.GameServerHUBs.Keys)
+            {
+                if (starter.GameServerHUBs[keys].GetActiveState())
+                {
+                    return starter.GameServerHUBs[keys].GetIP();
+                }
+
+            }
+
+            return "0";
+        }
+
+
+
     }
 
+    /*
     public class Player_data
     {
         public string character_name;
@@ -465,8 +457,70 @@ namespace setup_server
         public void PlayerIsReady()
         {
             is_ready = true;
-        }
+        }        
     }
+    */
+
+    public struct GameHubsSpec
+    {
+        private string hub_IP;
+        private bool isActive;
+        private List<long> ping;
+        private int number_of_sessions;
+
+        public GameHubsSpec(string _ip)
+        {
+            hub_IP = _ip;
+            isActive = true;
+            ping = new List<long>();
+            number_of_sessions = 0;
+        }
+
+        public void SetnonActive()
+        {
+            isActive = false;
+        }
+
+        public void SetSessions(int _sessions)
+        {
+            number_of_sessions = _sessions;
+        }
+
+        public void SetPing(long _ping)
+        {
+            ping.Add(_ping);
+
+            if (ping.Count>15)
+            {
+                ping.Remove(ping[0]);
+            }
+        }
+
+        public int GetPing()
+        {
+            if (ping.Count>0)
+            {
+                return (int)(ping.Sum() / ping.Count);
+            } 
+            else
+            {
+                return 0;
+            }
+            
+        }
+
+        public bool GetActiveState()
+        {
+            return isActive;
+        }
+
+        public string GetIP()
+        {
+            return hub_IP;
+        }
+        
+    }
+
 
     // State object for reading client data asynchronously  
     public class StateObject

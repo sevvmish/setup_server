@@ -22,7 +22,7 @@ namespace setup_server
 
         //game servers
         public static int GameServerPort = 2323;       
-        public static Dictionary<string, string> GameServerHUBs = new Dictionary<string, string>();
+        public static Dictionary<string, GameHubsSpec> GameServerHUBs = new Dictionary<string, GameHubsSpec>();
         
 
         static void Main(string[] args)
