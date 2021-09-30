@@ -17,6 +17,8 @@ namespace setup_server
         //public static Dictionary<string, Player_data> TemporaryDataForStartingGameSession = new Dictionary<string, Player_data>();
         public static Dictionary<string, PlayerForGameSession> PlayersAwaiting = new Dictionary<string, PlayerForGameSession>();
         public static HashSet<GameSessions> GameSessionsAwaiting = new HashSet<GameSessions>();
+        public const float LimitForIdlePlayerToLoseQueue = 6f;
+        public const float LimitForLonelyPlayerToLoseQueue = 700f;
 
         //gamehubs cheking
 
@@ -92,23 +94,17 @@ namespace setup_server
         {
             try
             {
-                //raw_data_received_tcp.Clear();
-                //Socket handler = (Socket)ar.AsyncState;
-
+              
                 StateObject state = (StateObject)ar.AsyncState;
                 Socket handler = state.workSocket;
                 int bytesRead = handler.EndReceive(ar);
 
                 if (bytesRead > 0)
-                {
-                    //raw_data_received_tcp.Append(Encoding.UTF8.GetString(buffer_received_tcp, 0, bytesRead));
-                    //Console.WriteLine(raw_data_received_tcp + " : " + handler.RemoteEndPoint.ToString());
+                {                  
                     state.sb.Append(Encoding.UTF8.GetString(state.buffer, 0, bytesRead));
-                    //Console.WriteLine(state.sb + " : " + handler.RemoteEndPoint.ToString());
-
-
+                 
                     if (!Sessions.ContainsKey(Encoding.UTF8.GetString(state.buffer, 0, 5)))  {
-                        //Console.WriteLine(Sessions.ContainsKey(Encoding.UTF8.GetString(state.buffer, 0, 5)) + " - is it in sess cont - NO");
+                 
                         packet_analyzer.StartSessionTCPInput(Encoding.UTF8.GetString(state.buffer, 0, bytesRead), handler);                        
                     } 
                     else
@@ -122,8 +118,7 @@ namespace setup_server
                         encryption.Decode(ref d, Sessions[Encoding.UTF8.GetString(state.buffer, 0, 5)]);
 
                         string back_result = packet_analyzer.ProcessTCPInput(Encoding.UTF8.GetString(d).Remove(0, 6), handler.RemoteEndPoint.ToString());
-
-                        //Console.WriteLine(back_result);
+                                           
                         byte[] t = Encoding.UTF8.GetBytes(back_result);
                         encryption.Encode(ref t, Sessions[Encoding.UTF8.GetString(state.buffer, 0, 5)]);
 
@@ -143,8 +138,7 @@ namespace setup_server
 
         public static string SendAndGetTCP_between_servers(string DataForSending, int CurrentPort, string IP, bool is_it_encoded)
         {
-            //int CurrentPort_tcp = general.GameServerTCPPort;
-            //string CurrentIP_tcp = general.GameServerIP;
+          
             int CurrentPort_tcp = (int)CurrentPort;
             string CurrentIP_tcp = IP;
 
@@ -249,8 +243,7 @@ namespace setup_server
 
         public static Task SendDataTCP(Socket handler, String data)
         {
-            //Console.WriteLine(data + " - send");
-
+          
             try
             {
                 // Convert the string data to byte data using ASCII encoding.  
@@ -323,25 +316,63 @@ namespace setup_server
                 {
                     try
                     {
+                        
+                        if (GameSessionsAwaiting.Count > 0)
+                        {
+                            //cheking for gamesession with allready got away players=======================
+                            foreach (GameSessions item in GameSessionsAwaiting)
+                            {
+                                if (item.GetPlayers().Count == 0)
+                                {
+                                    GameSessionsAwaiting.Remove(item);
+                                }
+                            }
+                            //===============================================================================
 
-                        List<PlayerForGameSession> looking_for_2 = new List<PlayerForGameSession>();
+                            
+                            foreach (GameSessions item in GameSessionsAwaiting)
+                            {
+                                if (item.GetPlayers().Count > 0)
+                                {
+                                    if (item.GetSessionStatus()==PlayerStatus.ischeckedOrganization && item.GetWhenCheckWasOK().AddSeconds(10)<DateTime.Now)
+                                    {
+                                        item.SetAllPlayersToReadyStatus();
+                                    }
+                                    
+                                }
+                            }
 
-                        Console.WriteLine(GameSessionsAwaiting.Count + " !!!!!!!!!!!!!!!CCCCCCCCCCOOOOOOUUUUUUUUUUUNNNNNNNNNNTTTTTTTTTT");
 
+                        }
+
+
+
+                        List<PlayerForGameSession> looking_for_2 = new List<PlayerForGameSession>(2);
+                        List<PlayerForGameSession> looking_for_4 = new List<PlayerForGameSession>(4);
+
+                      
                         foreach (string keys in PlayersAwaiting.Keys)
                         {
-                            //cleaning for old unupdated
-                            if (PlayersAwaiting[keys].WhenLastUpdated().AddSeconds(10) < DateTime.Now && !PlayersAwaiting[keys].isPlayerBusyForSession())
+                            //cleaning for old unupdated============================
+                            if (PlayersAwaiting[keys].WhenLastUpdated().AddSeconds(LimitForIdlePlayerToLoseQueue) < DateTime.Now && !PlayersAwaiting[keys].isPlayerBusyForSession())
                             {
                                 Console.WriteLine(DateTime.Now + ": removed from queue character - " + PlayersAwaiting[keys].GetCharacterName());
                                 if (looking_for_2.Contains(PlayersAwaiting[keys]))
                                 {
                                     looking_for_2.Remove(PlayersAwaiting[keys]);
                                 }
+                                if (looking_for_4.Contains(PlayersAwaiting[keys]))
+                                {
+                                    looking_for_4.Remove(PlayersAwaiting[keys]);
+                                }
+
                                 PlayersAwaiting.Remove(keys);
                             }
+                            //=======================================================
 
 
+
+                            //making session for 1vs1===========
                             if (!PlayersAwaiting[keys].isPlayerBusyForSession() && PlayersAwaiting[keys].GetPlayerGameType() == GameTypes.PvP_1vs1)
                             {
                                 looking_for_2.Add(PlayersAwaiting[keys]);
@@ -350,11 +381,22 @@ namespace setup_server
                                     GameSessionsAwaiting.Add(new GameSessions(looking_for_2));
                                     looking_for_2.Clear();
                                 }
-
-
-
                             }
+                            //===================================
 
+
+
+                            //making session for 2vs2============
+                            if (!PlayersAwaiting[keys].isPlayerBusyForSession() && PlayersAwaiting[keys].GetPlayerGameType() == GameTypes.PvP_2vs2)
+                            {
+                                looking_for_4.Add(PlayersAwaiting[keys]);
+                                if (looking_for_4.Count == 4)
+                                {
+                                    GameSessionsAwaiting.Add(new GameSessions(looking_for_4));
+                                    looking_for_4.Clear();
+                                }
+                            }
+                            //======================================
 
 
                         }
@@ -400,7 +442,7 @@ namespace setup_server
                     {
                         string[] _data = result.Split('~');
                         starter.GameServerHUBs[keys].SetSessions(int.Parse(_data[2]));
-
+                        starter.GameServerHUBs[keys].SetPing(ping);
                     }
 
                     Console.WriteLine(result + ": " + starter.GameServerHUBs[keys].GetActiveState() + " - " + starter.GameServerHUBs[keys].GetIP() + " - " + starter.GameServerHUBs[keys].GetPing());
@@ -428,39 +470,11 @@ namespace setup_server
         }
 
 
+        
 
     }
 
-    /*
-    public class Player_data
-    {
-        public string character_name;
-        public string character_id;
-        public string session_id;
-        public string player_id;
-        public string GameHUB;
-        public bool is_ready;
-        public List<string> OtherPlayerTickets;
-
-        public Player_data(string charac_n, string char_id, string sess, string player, List<string> pl_tickets)
-        {
-            character_name = charac_n;
-            character_id = char_id;
-            session_id = sess;
-            player_id = player;
-            GameHUB = "1";
-            is_ready = false;
-            OtherPlayerTickets = new List<string>();
-            OtherPlayerTickets = pl_tickets;
-        }
-
-        public void PlayerIsReady()
-        {
-            is_ready = true;
-        }        
-    }
-    */
-
+   
     public struct GameHubsSpec
     {
         private string hub_IP;

@@ -10,55 +10,70 @@ namespace setup_server
     {
         private GameTypes CurrentSessionType;
         private List<PlayerForGameSession> CurrentPlayers = new List<PlayerForGameSession>();
-        
+        private DateTime WhenCheckWasOK;
+        private PlayerStatus SessionStatus;
 
         public GameSessions(List<PlayerForGameSession> _current_players)
         {
+            //CurrentPlayers = _current_players;
             for (int i = 0; i < _current_players.Count; i++)
             {
-                _current_players[i].MakePlayerBusyForSession();
+                CurrentPlayers.Add(_current_players[i]);
             }
-            CurrentPlayers = _current_players;
-            CurrentSessionType = CurrentPlayers[0].GetPlayerGameType();
-            if (OrganizePVP())
+
+            for (int i = 0; i < CurrentPlayers.Count; i++)
             {
-                for (int i = 0; i < _current_players.Count; i++)
+                CurrentPlayers[i].MakePlayerBusyForSession();
+            }
+            //CurrentPlayers = _current_players;
+            CurrentSessionType = CurrentPlayers[0].GetPlayerGameType();
+            if (OrganizePVP(CurrentSessionType))
+            {
+                WhenCheckWasOK = DateTime.Now;
+                SessionStatus = PlayerStatus.ischeckedOrganization;
+                for (int i = 0; i < CurrentPlayers.Count; i++)
                 {
                     CurrentPlayers[i].SetStatusToChecked();
                 }
 
-                //Task.Run(() => StartSession());
-                StartSession();
-                Console.WriteLine("SSSSSSSSSSSTTTTTTTTTTTTEEEEEEEEPPPPPPPPPPPPP 1111111111111111");
-
+            
             } 
             else
             {
-                for (int i = 0; i < _current_players.Count; i++)
+                for (int i = 0; i < CurrentPlayers.Count; i++)
                 {
-                    _current_players[i].ResetPlayerStatusToNonBusy();                    
+                    CurrentPlayers[i].ResetPlayerStatusToNonBusy();                    
                 }
                 Server.GameSessionsAwaiting.Remove(this);
             }
 
         }
 
-        public void StartSession()
+        public PlayerStatus GetSessionStatus()
         {
-            Console.WriteLine("SSSSSSSSSSSTTTTTTTTTTTTEEEEEEEEPPPPPPPPPPPPP 2222222222222222");
-            //await Task.Delay(5000);
+            return SessionStatus;
+        }
 
+        public void SetAllPlayersToReadyStatus()
+        {
             for (int i = 0; i < CurrentPlayers.Count; i++)
             {
-                Console.WriteLine(CurrentPlayers[i].GetCharacterName());
                 CurrentPlayers[i].SetStatusToREADY();
             }
-            Console.WriteLine("SSSSSSSSSSSTTTTTTTTTTTTEEEEEEEEPPPPPPPPPPPPP 33333333333333333");
-            Server.GameSessionsAwaiting.Remove(this);
+        }
+
+        public DateTime GetWhenCheckWasOK()
+        {
+            return WhenCheckWasOK;
+        }
+
+        public List<PlayerForGameSession> GetPlayers()
+        {
+            return CurrentPlayers;
         }
 
 
-        public bool OrganizePVP()
+        private bool OrganizePVP(GameTypes CurrentGameType)
         {
             
             List<string> _char_id = new List<string>();
@@ -70,10 +85,16 @@ namespace setup_server
             }
 
             int game_type_id = 0;
-            switch (_count)
+            switch ((int)CurrentGameType)
             {
-                case 2:
+                case 0:
+                    game_type_id = 0; //testing
+                    break;
+                case 1:
                     game_type_id = 1; //type of PVP - 1vs1
+                    break;
+                case 2:
+                    game_type_id = 2; //type of PVP - 2vs2
                     break;
             }
 
@@ -137,8 +158,78 @@ namespace setup_server
 
                 for (int i = 0; i < _count; i++)
                 {
+                    int team_id = 0;
+                    int x = 0;
+                    int z = 0;
+                    int rot_y = 0;
+
+                    switch(game_type_id)
+                    {
+                        case 0: //testing mode
+                            team_id = 0;
+                            x = 0;
+                            z = 0;
+                            rot_y = 180;
+                            break;
+
+                        case 1: //PvP 1vs1
+                            team_id = i;
+
+                            if (i == 0)
+                            {
+                                x = -5;
+                                z = 0;
+                                rot_y = 90;
+                            }
+                            else
+                            {
+                                x = 5;
+                                z = 0;
+                                rot_y = 270;
+                            }
+
+                            break;
+                        case 2: //PvP 2vs2
+                            if (i<2)
+                            {
+                                team_id = 0;
+
+                                if (i == 0)
+                                {                                   
+                                    x = -5;
+                                    z = -3;
+                                    rot_y = 90;
+                                }
+                                else
+                                {                                   
+                                    x = -5;
+                                    z = 3;
+                                    rot_y = 90;
+                                }
+                            } 
+                            else
+                            {
+                                team_id = 1;
+
+                                if (i == 2)
+                                {
+                                    x = 5;
+                                    z = 3;
+                                    rot_y = 270;
+                                }
+                                else
+                                {
+                                    x = 5;
+                                    z = -3;
+                                    rot_y = 270;
+                                }
+                            }
+                            break;
+
+                    }
+
                     if (i > 0) { send_players_data = send_players_data + ","; }
-                    send_players_data = send_players_data + $" ('{(i + 1)}', '{new_player_id_aka_ticket[i]}','{char_n[i].GetValue(0)}','{char_n[i].GetValue(1)}','0','{i}','{game_type_id}','{zone_type}',2,0,2,0,0,0,'{char_d[i].GetValue(1)}',0,'','{char_d[i].GetValue(2)}={char_d[i].GetValue(2)}',100,'{char_d[i].GetValue(3)}','{char_d[i].GetValue(4)}','{char_d[i].GetValue(5)}','{char_d[i].GetValue(6)}','{char_d[i].GetValue(7)}','{char_d[i].GetValue(8)}','{char_d[i].GetValue(9)}','{char_d[i].GetValue(10)}','{char_d[i].GetValue(11)}','{char_d[i].GetValue(12)}','{char_d[i].GetValue(13)}','{char_d[i].GetValue(14)}','{char_d[i].GetValue(15)}','{char_d[i].GetValue(16)}','{char_d[i].GetValue(17)}','{char_d[i].GetValue(18)}','{char_d[i].GetValue(19)}',997,'{char_d[i].GetValue(21)}',0)";
+                    send_players_data = send_players_data + $" ('{(i + 1)}', '{new_player_id_aka_ticket[i]}','{char_n[i].GetValue(0)}','{char_n[i].GetValue(1)}','0','{team_id}','{game_type_id}','{zone_type}',{x},0,{z},0,{rot_y},0,'{char_d[i].GetValue(1)}',0,'','{char_d[i].GetValue(2)}={char_d[i].GetValue(2)}',100,'{char_d[i].GetValue(3)}','{char_d[i].GetValue(4)}','{char_d[i].GetValue(5)}','{char_d[i].GetValue(6)}','{char_d[i].GetValue(7)}','{char_d[i].GetValue(8)}','{char_d[i].GetValue(9)}','{char_d[i].GetValue(10)}','{char_d[i].GetValue(11)}','{char_d[i].GetValue(12)}','{char_d[i].GetValue(13)}','{char_d[i].GetValue(14)}','{char_d[i].GetValue(15)}','{char_d[i].GetValue(16)}','{char_d[i].GetValue(17)}','{char_d[i].GetValue(18)}','{char_d[i].GetValue(19)}',997,'{char_d[i].GetValue(21)}',0)";
                     if (i == (_count - 1)) { send_players_data = send_players_data + ";"; }
                 }
 
@@ -204,6 +295,7 @@ namespace setup_server
         private DateTime WhenLastUpdateSignal;
         private GameTypes PlayerGameType;
         private PlayerStatus CurrentPlayerStatus;
+        private DateTime WhenPassedCheckOK;
         private string GameHub = "0";
 
         private int PlayerPVPRaiting;
@@ -220,6 +312,17 @@ namespace setup_server
             isBusyForSession = false;
             WhenLastUpdateSignal = DateTime.Now;
             CurrentPlayerStatus = PlayerStatus.free;
+            WhenPassedCheckOK = DateTime.Now;
+        }
+
+        public DateTime GetTimeOfPassCheckOK()
+        {
+            return WhenPassedCheckOK;
+        }
+
+        public DateTime WhenStarted()
+        {
+            return WhenEnteredToSearchGame;
         }
 
         public bool isPlayerBusyForSession()
@@ -282,6 +385,7 @@ namespace setup_server
         public void SetStatusToChecked()
         {
             CurrentPlayerStatus = PlayerStatus.ischeckedOrganization;
+            WhenPassedCheckOK = DateTime.Now;
         }
 
         public void SetStatusToREADY()
@@ -318,10 +422,11 @@ namespace setup_server
 
     public enum GameTypes
     {
-        PvP_1vs1 = 0,
+        PvE_for_test = 0,
+        PvP_1vs1,
         PvP_2vs2,
         PvP_3vs3,
-        PvE_for_test
+        
     }
 
     public enum PlayerStatus

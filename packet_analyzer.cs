@@ -51,9 +51,9 @@ namespace setup_server
                     return $"2~0~{result}";
                 }
 
-                //start queue for 1vs1 PVP
-                //3~1~ticket~character
-                if (packet_data.Length == 4 && (packet_data[0] + packet_data[1]) == "31")
+                //start queue for any PVP
+                //3~1~ticket~character~1
+                if (packet_data.Length == 5 && (packet_data[0] + packet_data[1]) == "31")
                 {
 
                     if (!StringChecker(packet_data[2]) || !StringChecker(packet_data[3]))
@@ -82,14 +82,38 @@ namespace setup_server
                         Console.WriteLine(DateTime.Now + $": player {packet_data[3]} allready in queue for PVP, to user from - " + endpoint_address);
                         return $"3~1~aiq";
                     }
-                    
+
 
                     //organize new pvp queue for player
-                    //get PVP Raiting:
+                    //get PVP Raiting???
+
+                    GameTypes WhatPVP = GameTypes.PvP_1vs1;
+
+                    switch(int.Parse(packet_data[4]))
+                    {
+                        case 0:
+                            WhatPVP = GameTypes.PvE_for_test;
+                            break;
+                        case 1:
+                            WhatPVP = GameTypes.PvP_1vs1;
+                            break;
+                        case 2:
+                            WhatPVP = GameTypes.PvP_2vs2;
+                            break;
+                        case 3:
+                            break;
+                    }
+
+
+
                     if (!Server.PlayersAwaiting.ContainsKey(char_id[0, 0])) {
+                        
+                        //cheking raiting
                         string[,] PVPraiting = mysql.GetMysqlSelect($"SELECT `character_pvp_rait` FROM `character_raiting` WHERE `character_id`='{char_id[0, 0]}'").Result;
                         if (PVPraiting[0, 0] == "error") PVPraiting[0, 0] = "0";
-                        Server.PlayersAwaiting.Add(char_id[0, 0], new PlayerForGameSession(char_id[0, 0], packet_data[3], packet_data[2], GameTypes.PvP_1vs1, int.Parse(PVPraiting[0, 0])));
+                        
+                        //INIT
+                        Server.PlayersAwaiting.Add(char_id[0, 0], new PlayerForGameSession(char_id[0, 0], packet_data[3], packet_data[2], WhatPVP, int.Parse(PVPraiting[0, 0])));
                         return $"3~1~ok";
                     }
                                
@@ -124,7 +148,7 @@ namespace setup_server
                     {
                         Server.PlayersAwaiting.Remove(char_id[0, 0]);
                         Console.WriteLine(DateTime.Now + $": player {packet_data[3]} removed from any queues, to user from - " + endpoint_address);
-                        return $"3~10~out";
+                        return $"3~101~out";
                     }
 
 
@@ -287,20 +311,38 @@ namespace setup_server
                         return $"4~0~0~nst"; 
                     }
 
-                    if (Server.PlayersAwaiting.ContainsKey(get_char_id[0,0]) && (Server.PlayersAwaiting[get_char_id[0, 0]].GetCurrentPlayerStatus()==PlayerStatus.free || Server.PlayersAwaiting[get_char_id[0, 0]].GetCurrentPlayerStatus() == PlayerStatus.isBusy))
-                    {
-                        Server.PlayersAwaiting[get_char_id[0, 0]].Update();
-                        return $"4~0~0~0";
-                    }
-
                     if (!Server.PlayersAwaiting.ContainsKey(get_char_id[0, 0]))
                     {
                         Console.WriteLine(DateTime.Now + ": send error - no such player in queue - to user from - " + endpoint_address);
                         return $"4~0~0~nst";
                     }
 
+
+                    //remove player for timeout
+                    if (Math.Abs(Server.PlayersAwaiting[get_char_id[0, 0]].WhenStarted().Subtract(DateTime.Now).TotalSeconds)> Server.LimitForLonelyPlayerToLoseQueue)
+                    {
+                        Server.PlayersAwaiting.Remove(get_char_id[0, 0]);
+                        Console.WriteLine(DateTime.Now + $": player {packet_data[3]} removed from any queues for timeout, to user from - " + endpoint_address);
+                        return $"3~101~timeout";
+                    }
+
+                    if (Server.PlayersAwaiting.ContainsKey(get_char_id[0,0]) && (Server.PlayersAwaiting[get_char_id[0, 0]].GetCurrentPlayerStatus()==PlayerStatus.free || Server.PlayersAwaiting[get_char_id[0, 0]].GetCurrentPlayerStatus() == PlayerStatus.isBusy))
+                    {
+                        Server.PlayersAwaiting[get_char_id[0, 0]].Update();
+                        return $"4~0~0~0";
+                    }                    
+
                     if (Server.PlayersAwaiting.ContainsKey(get_char_id[0, 0]) && Server.PlayersAwaiting[get_char_id[0, 0]].GetCurrentPlayerStatus() == PlayerStatus.ischeckedOrganization)
                     {
+                        /*
+                        //10 seconds await before start
+                        if (Server.PlayersAwaiting[get_char_id[0, 0]].GetTimeOfPassCheckOK().AddSeconds(10)<DateTime.Now)
+                        {
+                            Server.PlayersAwaiting[get_char_id[0, 0]].SetStatusToREADY();
+                        }
+                        //====================================
+                        */
+
                         Server.PlayersAwaiting[get_char_id[0, 0]].Update();
                         Console.WriteLine(DateTime.Now + ": send get ready 4~0~2~0 to user from - " + endpoint_address);
                         return $"4~0~2~0"; //GGEEETTT RRREEAAAADDDYYY
@@ -313,68 +355,11 @@ namespace setup_server
                         string _new_session = Server.PlayersAwaiting[get_char_id[0, 0]].GetNewSession();
                         string _game_hub = Server.PlayersAwaiting[get_char_id[0, 0]].GetGameHub();
                         functions.ChangeTicketInPlayer(_old_ticket, _new_ticket);
-                        Console.WriteLine(DateTime.Now + $": chanched old ticket {_old_ticket} to new {_new_ticket}, started session {_new_session} to {endpoint_address}");
+                        Console.WriteLine(DateTime.Now + $": changed old ticket {_old_ticket} to new {_new_ticket}, started session {_new_session} to {endpoint_address}");
                         Server.PlayersAwaiting.Remove(get_char_id[0, 0]);
                         return $"4~0~3~{_new_ticket}~{_new_session}~{_game_hub}";
                     }
 
-                    /*
-
-                    if (!Server.pvp1vs1.ContainsKey(get_char_id[0, 0]))
-                    {
-                        bool creating_result = mysql.ExecuteSQLInstruction($"DELETE FROM `session_queue` WHERE `character_id`= '{get_char_id[0, 0]}' ").Result;
-                        if (Server.TemporaryDataForStartingGameSession.ContainsKey(packet_data[3])) { 
-                            Server.TemporaryDataForStartingGameSession.Remove(packet_data[3]); 
-                        }
-
-                        Console.WriteLine(DateTime.Now + ": send problem -no such player awaits queue, queue stopped- to user " + packet_data[3] + " from " + endpoint_address);
-                        //return "error";
-                    }
-                    //==========================================
-
-                    if (!Server.TemporaryDataForStartingGameSession.ContainsKey(packet_data[2]))
-                    {
-                        Console.WriteLine(DateTime.Now + ": send 4~0~0~0 to user from - " + endpoint_address);
-                        return $"4~0~0~0";
-                    }
-
-                    if (Server.TemporaryDataForStartingGameSession[packet_data[2]].character_name != packet_data[3])
-                    {
-                        Console.WriteLine(DateTime.Now + ": send problem 4~0~0~nsc to user from - " + endpoint_address);
-                        return $"4~0~0~nsc";
-                    }
-
-                    if (!Server.TemporaryDataForStartingGameSession[packet_data[2]].is_ready)
-                    {
-                        Console.WriteLine(DateTime.Now + ": player is ready " + packet_data[2] + " - " + endpoint_address);
-                        Server.TemporaryDataForStartingGameSession[packet_data[2]].PlayerIsReady();
-                    }
-                    
-                    bool isOK = true;
-                    for (int i = 0; i < Server.TemporaryDataForStartingGameSession[packet_data[2]].OtherPlayerTickets.Count; i++)
-                    {
-                        if (!Server.TemporaryDataForStartingGameSession[Server.TemporaryDataForStartingGameSession[packet_data[2]].OtherPlayerTickets[i]].is_ready)
-                        {
-                            isOK = false;
-                        }
-                    }
-
-                    
-
-                    if (!isOK)
-                    {
-                        Console.WriteLine(DateTime.Now + ": send get ready 4~0~2~0 to user from - " + endpoint_address);
-                        return $"4~0~2~0"; //GGEEETTT RRREEAAAADDDYYY
-                    } 
-                    else
-                    {
-                        //bool creating_result = mysql.ExecuteSQLInstruction($"DELETE FROM `session_queue` WHERE `character_id`= '{Server.TemporaryDataForStartingGameSession[packet_data[2]].character_id}' ").Result;
-                        Server.pvp1vs1.Remove(Server.TemporaryDataForStartingGameSession[packet_data[2]].character_id);
-                        functions.ChangeTicketInPlayer(packet_data[2], Server.TemporaryDataForStartingGameSession[packet_data[2]].player_id);
-                        Console.WriteLine(DateTime.Now + $": chanched old ticket {packet_data[2]} to new {Server.TemporaryDataForStartingGameSession[packet_data[2]].player_id}, started session {Server.TemporaryDataForStartingGameSession[packet_data[2]].session_id} to {endpoint_address}");
-                        return $"4~0~3~{Server.TemporaryDataForStartingGameSession[packet_data[2]].player_id}~{Server.TemporaryDataForStartingGameSession[packet_data[2]].session_id}~{Server.TemporaryDataForStartingGameSession[packet_data[2]].GameHUB}";
-                    }
-                    */
 
                 }
 
