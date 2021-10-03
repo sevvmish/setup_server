@@ -111,7 +111,7 @@ namespace setup_server
                 //get hub_ip for game:
                 Server.CheckGameHubs();
                 string Game_hub_IP = Server.GetGameHub();
-
+                Console.WriteLine(DateTime.Now + ": server chosen - " + Game_hub_IP);
 
                 for (int i = 0; i < _count; i++)
                 {

@@ -450,7 +450,8 @@ namespace setup_server
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex);
+                    starter.GameServerHUBs[keys].SetnonActive();
+                    Console.WriteLine(DateTime.Now + ": server is inactive - no ping - " + starter.GameServerHUBs[keys].GetIP());
                 }
             }
         }
