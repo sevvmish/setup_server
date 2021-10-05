@@ -6,12 +6,15 @@ using System.Threading.Tasks;
 using System.Threading;
 using System.Net;
 using System.Net.Sockets;
+using NetCoreServer;
 
 namespace setup_server
 {
     
     class Server
     {
+        public static Dictionary<string, PingProcessor> SendPingsList = new Dictionary<string, PingProcessor>();
+        public static Dictionary<string, long> ReceivedPingList = new Dictionary<string, long>();
         public static Dictionary<string, byte[]> Sessions = new Dictionary<string, byte[]>();
         public static Dictionary<string, DateTime> pvp1vs1 = new Dictionary<string, DateTime>();
         //public static Dictionary<string, Player_data> TemporaryDataForStartingGameSession = new Dictionary<string, Player_data>();
@@ -22,6 +25,12 @@ namespace setup_server
 
         //gamehubs cheking
 
+        //UDP
+        //private static Socket socket_udp;
+        private const int port_udp_for_GameHubs = 2325;
+        //private static IPEndPoint ipendpoint_udp;
+        //private static EndPoint endpoint_udp;
+        public static UDPServerConnector ServerUDP;
 
         //TCP        
         public static ManualResetEvent allDone = new ManualResetEvent(false);
@@ -39,6 +48,15 @@ namespace setup_server
         {
             //start checker for PVP
             Task.Run(() => check_queue_for_pvp());
+
+            Task.Run(() =>
+            {
+                ServerUDP = new UDPServerConnector(IPAddress.Any, 2327);
+                ServerUDP.Start();
+
+
+
+            });
 
             //TCP config===================================
             ipaddress_tcp = IPAddress.Any;
@@ -306,6 +324,38 @@ namespace setup_server
         }
 
 
+        public static Task SendDataUDP(EndPoint ipEnd, string data)
+        {
+            try
+            {
+                //ServerUDP.SendAsync(ipEnd, data);
+                ServerUDP.Send(ipEnd, data);
+                //Console.WriteLine("out&" + data + "$" + starter.stopWatch.ElapsedMilliseconds);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("==============ERROR================\n" + ex + "\n" + DateTime.Now + "\n" + "==================ERROR_END===========\n");
+            }
+            return Task.CompletedTask;
+        }
+
+        public static Task SendDataUDP(EndPoint ipEnd, byte[] data)
+        {
+            try
+            {
+                //ServerUDP.SendAsync(ipEnd, data);
+                ServerUDP.Send(ipEnd, data);
+                //Console.WriteLine("out&" + data + "$" + starter.stopWatch.ElapsedMilliseconds);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("==============ERROR================\n" + ex + "\n" + DateTime.Now + "\n" + "==================ERROR_END===========\n");
+            }
+            return Task.CompletedTask;
+        }
+
+
+
         public static async void check_queue_for_pvp()
         {
             long CurrentTime = starter.stopWatch.ElapsedMilliseconds;
@@ -420,32 +470,58 @@ namespace setup_server
             }
         }
 
-        public static void CheckGameHubs()
+        public static async Task SendPing(EndPoint EP, string ID)
+        {
+            try
+            {                
+                PingProcessor _ping_p = new PingProcessor();
+                SendPingsList.Add(ID, _ping_p);
+                _ping_p.SendTime = starter.stopWatch.ElapsedMilliseconds;
+                _ping_p.ID = ID;
+
+                string result = $"0~7~{starter.InnerServerConnectionPassword}~{ID}";
+                byte[] b = Encoding.UTF8.GetBytes(result);
+                encryption.Encode(ref b, starter.secret_key_for_game_servers);
+
+                await Server.SendDataUDP(EP, b);
+                KillSendPingKey(ID);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+        }
+
+        public static async Task<string> CheckAndGetGameHubs()
         {
             foreach (string keys in starter.GameServerHUBs.Keys)
             {
-                long _pre_ping = starter.stopWatch.ElapsedMilliseconds;
-                string result = null;
-
+               
                 try
                 {
-                    result = Server.SendAndGetTCP_between_servers($"0~7~{starter.InnerServerConnectionPassword}", starter.GameServerPort, starter.GameServerHUBs[keys].GetIP(), true);
-                                
-                    long ping = starter.stopWatch.ElapsedMilliseconds - _pre_ping;
+                    string ID = functions.get_random_set_of_symb(6);
 
-                    if (result==null || result=="0~7~wp")
+                    await SendPing(IPEndPoint.Parse($"{starter.GameServerHUBs[keys].GetIP()}:{port_udp_for_GameHubs}"), ID);
+                    await Task.Delay(1000);
+
+                    if (SendPingsList.ContainsKey(ID) && SendPingsList[ID].isItOK())
                     {
-                        Console.WriteLine("ping server is 07wp");
-                        starter.GameServerHUBs[keys].SetnonActive();
-                    }
+                        
+                        starter.GameServerHUBs[keys].SetActive();
+                        starter.GameServerHUBs[keys].SetPing(SendPingsList[ID].GetPing());
+                        starter.GameServerHUBs[keys].SetSessions(SendPingsList[ID].GetSessions());
+                        SendPingsList.Remove(ID);
+                    } 
                     else
                     {
-                        string[] _data = result.Split('~');
-                        starter.GameServerHUBs[keys].SetSessions(int.Parse(_data[2]));
-                        starter.GameServerHUBs[keys].SetPing(ping);
+                        
+                        Console.WriteLine(DateTime.Now + ": server is inactive - no ping - " + starter.GameServerHUBs[keys].GetIP());
+                        starter.GameServerHUBs[keys].SetnonActive();
+                        
                     }
 
-                    Console.WriteLine(result + ": " + starter.GameServerHUBs[keys].GetActiveState() + " - " + starter.GameServerHUBs[keys].GetIP() + " - " + starter.GameServerHUBs[keys].GetPing());
+                  
+                    Console.WriteLine(starter.GameServerHUBs[keys].GetActiveState() + " - " + starter.GameServerHUBs[keys].GetIP() + " - " + starter.GameServerHUBs[keys].GetPing());
 
                 }
                 catch (Exception ex)
@@ -454,10 +530,7 @@ namespace setup_server
                     Console.WriteLine(DateTime.Now + ": server is inactive - no ping - " + starter.GameServerHUBs[keys].GetIP());
                 }
             }
-        }
 
-        public static string GetGameHub()
-        {
             foreach (string keys in starter.GameServerHUBs.Keys)
             {
                 if (starter.GameServerHUBs[keys].GetActiveState())
@@ -467,16 +540,23 @@ namespace setup_server
 
             }
 
-            return "0";
+            return "error";
         }
 
+        public static async void KillSendPingKey(string ID)
+        {
+            await Task.Delay(5000);
 
+            if (SendPingsList.ContainsKey(ID)) SendPingsList.Remove(ID);
+        }
+
+      
         
 
     }
 
    
-    public struct GameHubsSpec
+    public class GameHubsSpec
     {
         private string hub_IP;
         private bool isActive;
@@ -494,6 +574,11 @@ namespace setup_server
         public void SetnonActive()
         {
             isActive = false;
+        }
+
+        public void SetActive()
+        {
+            isActive = true;
         }
 
         public void SetSessions(int _sessions)
@@ -551,6 +636,157 @@ namespace setup_server
 
         // Client socket.
         public Socket workSocket = null;
+    }
+
+    class PingProcessor
+    {
+        public string ID;
+        public long SendTime;
+        public long ReceivedTime;
+        public int Sessions;
+        public bool isOK;
+
+        public void SetReceivedTime(long _data)
+        {
+            ReceivedTime = _data;
+        }
+
+        public void SetSessions(int _data)
+        {
+            Sessions = _data;
+        }
+
+        public void SetOKGood()
+        {
+            isOK = true;
+        }
+
+        public bool isItOK()
+        {
+            return isOK;
+        }
+
+        public int GetSessions()
+        {
+            return Sessions;
+        }
+
+        public int GetPing()
+        {
+            return (int)(ReceivedTime - SendTime);
+        }
+
+    }
+
+
+    class UDPServerConnector : UdpServer
+    {
+
+        private StringBuilder raw_data_received_udp = new StringBuilder(1024);
+
+        public UDPServerConnector(IPAddress address, int port) : base(address, port) { }
+
+
+        protected override void OnStarted()
+        {
+            // Start receive datagrams
+            try
+            {
+                Console.WriteLine(DateTime.Now + ": " + "game server UDP initiated");
+                ReceiveAsync();
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("==============ERROR================\n" + ex + "\n" + DateTime.Now + "\n" + "==================ERROR_END===========\n");
+            }
+
+        }
+
+        protected override void OnReceived(EndPoint endpoint, byte[] buffer, long offset, long size)
+        {
+
+            if (size == 0)
+            {
+
+                // Important: Receive using thread pool is necessary here to avoid stack overflow with Socket.ReceiveFromAsync() method!
+                ThreadPool.QueueUserWorkItem(o => { ReceiveAsync(); });
+
+            }
+            else
+            {
+
+                //List<byte> b = new List<byte>();
+                byte[] t = new byte[(int)size];
+
+                for (int i = 0; i < (int)size; i++)
+                {
+                    //b.Add(buffer[i]);
+                    t[i] = buffer[i];
+                }
+
+
+                    
+                string data_result = Encoding.UTF8.GetString(t, 0, t.Length);
+
+                Console.WriteLine("received " + data_result);
+
+                try
+                {
+                    string[] packet_data = data_result.Split('~');
+
+                    if (packet_data.Length>=2 && (packet_data[0] + packet_data[1]) == "07")
+                    {
+
+                        encryption.Decode(ref t, starter.secret_key_for_game_servers);
+                        data_result = Encoding.UTF8.GetString(t, 0, t.Length);
+                        packet_data = data_result.Split('~');
+
+                        if (packet_data.Length == 5 && packet_data[2]== starter.InnerServerConnectionPassword)
+                        {
+                            if (Server.SendPingsList.ContainsKey(packet_data[4]))
+                            {
+                                Console.WriteLine(packet_data[4]);
+                                Server.SendPingsList[packet_data[4]].SetReceivedTime(starter.stopWatch.ElapsedMilliseconds);
+                                Server.SendPingsList[packet_data[4]].SetSessions(int.Parse(packet_data[3]));
+                                Server.SendPingsList[packet_data[4]].SetOKGood();
+                            }
+                            
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex);
+                }
+           
+
+
+
+            }
+            //ThreadPool.QueueUserWorkItem(o => { ReceiveAsync(); });
+
+
+            try
+            {
+                ReceiveAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Onreceived - " + ex);
+            }
+
+            // Echo the message back to the sender
+            //SendAsync(endpoint, buffer, offset, size);
+        }
+
+
+        protected override void OnError(SocketError error)
+        {
+            Console.WriteLine($"Server caught an error with code {error} ");
+
+        }
+
     }
 
 }

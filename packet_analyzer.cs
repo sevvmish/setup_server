@@ -7,6 +7,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
+
 namespace setup_server
 {
     class packet_analyzer
@@ -447,6 +448,33 @@ namespace setup_server
 
             //return "";
 
+        }
+
+        public static void ProcessPing(string data, EndPoint EP)
+        {
+            try
+            {
+                string[] packet_data = data.Split('~');
+
+                if ((packet_data[0] + packet_data[1]) == "07")
+                {
+                    Console.WriteLine("what data received " + data);
+                    if (packet_data[2] != starter.InnerServerConnectionPassword)
+                    {
+                        Console.WriteLine(DateTime.Now + ": error 0~7~wp for another server from " + EP.ToString());
+                        Server.SendDataUDP(EP, $"0~7~wp");
+                        return;
+                    }
+
+                    Console.WriteLine(DateTime.Now + ": received ping from " + EP.ToString());
+                    Server.SendDataUDP(EP, $"0~7~{starter.GameServerHUBs.Count}");
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("==============ERROR================\n" + ex + "\n" + data + "\n" + DateTime.Now + "\n" + "==================ERROR_END===========\n");
+            }
         }
 
         private static async void CleanTempSession(string index)

@@ -27,7 +27,7 @@ namespace setup_server
             }
             //CurrentPlayers = _current_players;
             CurrentSessionType = CurrentPlayers[0].GetPlayerGameType();
-            if (OrganizePVP(CurrentSessionType))
+            if (OrganizePVP(CurrentSessionType).Result)
             {
                 WhenCheckWasOK = DateTime.Now;
                 SessionStatus = PlayerStatus.ischeckedOrganization;
@@ -73,7 +73,7 @@ namespace setup_server
         }
 
 
-        private bool OrganizePVP(GameTypes CurrentGameType)
+        private async Task<bool> OrganizePVP(GameTypes CurrentGameType)
         {
             
             List<string> _char_id = new List<string>();
@@ -109,9 +109,13 @@ namespace setup_server
             {
 
                 //get hub_ip for game:
-                Server.CheckGameHubs();
-                string Game_hub_IP = Server.GetGameHub();
+                
+                string Game_hub_IP = await Task<string>.Run(()=> Server.CheckAndGetGameHubs());
                 Console.WriteLine(DateTime.Now + ": server chosen - " + Game_hub_IP);
+                if (Game_hub_IP=="error")
+                {
+                    return false;
+                }
 
                 for (int i = 0; i < _count; i++)
                 {
