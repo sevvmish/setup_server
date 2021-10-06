@@ -369,9 +369,20 @@ namespace setup_server
                         
                         if (GameSessionsAwaiting.Count > 0)
                         {
-                            //cheking for gamesession with allready got away players=======================
+                            
                             foreach (GameSessions item in GameSessionsAwaiting)
                             {
+                                //set ready status for players whis checked and 10 seconds waited
+                                if (item.GetPlayers().Count > 0)
+                                {
+                                    if (item.GetSessionStatus() == PlayerStatus.ischeckedOrganization && item.GetWhenCheckWasOK().AddSeconds(10) < DateTime.Now)
+                                    {
+                                        item.SetAllPlayersToReadyStatus();
+                                    }
+
+                                }
+
+                                //cheking for gamesession with allready got away players=======================
                                 if (item.GetPlayers().Count == 0)
                                 {
                                     GameSessionsAwaiting.Remove(item);
@@ -380,16 +391,12 @@ namespace setup_server
                             //===============================================================================
 
                             
+
                             foreach (GameSessions item in GameSessionsAwaiting)
                             {
-                                if (item.GetPlayers().Count > 0)
-                                {
-                                    if (item.GetSessionStatus()==PlayerStatus.ischeckedOrganization && item.GetWhenCheckWasOK().AddSeconds(10)<DateTime.Now)
-                                    {
-                                        item.SetAllPlayersToReadyStatus();
-                                    }
-                                    
-                                }
+                                
+                                
+                                //===================================
                             }
 
 
@@ -434,6 +441,15 @@ namespace setup_server
                             }
                             //===================================
 
+
+                            //bot for 1vs1
+                            if (looking_for_2.Count==1 && looking_for_2[0].WhenStarted().AddSeconds(1)<DateTime.Now)
+                            {
+                                looking_for_2.Add(new PlayerForGameSession("-1", "warrior bot", "botttt", GameTypes.PvP_1vs1, 0));
+                                GameSessionsAwaiting.Add(new GameSessions(looking_for_2));
+                                looking_for_2.Clear();
+                            }
+                            //=====================================
 
 
                             //making session for 2vs2============
