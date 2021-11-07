@@ -22,6 +22,7 @@ namespace setup_server
         public static HashSet<GameSessions> GameSessionsAwaiting = new HashSet<GameSessions>();
         public const float LimitForIdlePlayerToLoseQueue = 6f;
         public const float LimitForLonelyPlayerToLoseQueue = 700f;
+        public const float TimeForWaitBeforeAddingBot = 10f;
 
         //gamehubs cheking
 
@@ -443,9 +444,22 @@ namespace setup_server
 
 
                             //bot for 1vs1
-                            if (looking_for_2.Count==1 && looking_for_2[0].WhenStarted().AddSeconds(1)<DateTime.Now)
+                            if (looking_for_2.Count==1 && looking_for_2[0].WhenStarted().AddSeconds(TimeForWaitBeforeAddingBot)<DateTime.Now)
                             {
-                                looking_for_2.Add(new PlayerForGameSession("-1", "warrior bot", "botttt", GameTypes.PvP_1vs1, 0));
+                                Random rnd = new Random();
+
+                                switch(rnd.Next(1,3))
+                                {
+                                    case 1:
+                                        looking_for_2.Add(new PlayerForGameSession("-1", "warrior bot", "botttt", GameTypes.PvP_1vs1, 0));
+                                        break;
+                                    case 2:
+                                        looking_for_2.Add(new PlayerForGameSession("-2", "elem bot", "botttt", GameTypes.PvP_1vs1, 0));
+                                        break;
+                                }
+
+                                //looking_for_2.Add(new PlayerForGameSession("-1", "warrior bot", "botttt", GameTypes.PvP_1vs1, 0));
+                                
                                 GameSessionsAwaiting.Add(new GameSessions(looking_for_2));
                                 looking_for_2.Clear();
                             }

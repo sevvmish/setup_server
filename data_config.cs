@@ -12,20 +12,31 @@ namespace setup_server
     {
         public static async void Init_data_config()
         {
-            using (FileStream fs = new FileStream(starter.address_for_data_config, FileMode.OpenOrCreate))
+            try
             {
-                data_config_json Data = await JsonSerializer.DeserializeAsync<data_config_json>(fs);
-                starter.secret_key_for_game_servers = GetByteArrFromStringComma(Data.secret_key_for_game_servers);
-                starter.InnerServerConnectionPassword = Data.InnerServerConnectionPassword;
-                starter.MysqlConnectionData_login = Data.mysql_server_data;
-                //starter.GameServerHUBs = Data.GameHubs;
-                Dictionary<string, string> temp = Data.GameHubs;
-
-                foreach (string keys in temp.Keys)
+                using (FileStream fs = new FileStream(starter.address_for_data_config, FileMode.OpenOrCreate))
                 {
-                    starter.GameServerHUBs.Add(keys, new GameHubsSpec(temp[keys]));
+                    data_config_json Data = await JsonSerializer.DeserializeAsync<data_config_json>(fs);
+                    starter.secret_key_for_game_servers = GetByteArrFromStringComma(Data.secret_key_for_game_servers);
+                    starter.InnerServerConnectionPassword = Data.InnerServerConnectionPassword;
+                    starter.MysqlConnectionData_login = Data.mysql_server_data;
+                    //starter.GameServerHUBs = Data.GameHubs;
+                    Dictionary<string, string> temp = Data.GameHubs;
+
+                    foreach (string keys in temp.Keys)
+                    {
+                        starter.GameServerHUBs.Add(keys, new GameHubsSpec(temp[keys]));
+                    }
                 }
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine(DateTime.Now + ": error - =========================");
+                Console.WriteLine(ex);
+                Console.WriteLine(": error ends - =========================");
+            }
+
+            
         }
 
         public static byte[] GetByteArrFromStringComma(string key_in_string)

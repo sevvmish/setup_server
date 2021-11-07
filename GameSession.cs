@@ -160,6 +160,21 @@ namespace setup_server
 
                 int zone_type = 1;
 
+                Random rnd = new Random();
+
+                switch(rnd.Next(1,4))
+                {
+                    case 1: //stone location
+                        zone_type = 1;
+                        break;
+                    case 2: //forest location
+                        zone_type = 2;
+                        break;
+                    case 3: //lava location
+                        zone_type = 3;
+                        break;
+                }
+
                 for (int i = 0; i < _count; i++)
                 {
                     int team_id = 0;
