@@ -302,17 +302,28 @@ namespace setup_server
                         Console.WriteLine(DateTime.Now + ": send problem 4~0~0~wds to user from - " + endpoint_address);
                         return $"4~0~0~wds"; //wrong digits or signs                    
                     }
-                                        
+
 
                     //get character id and update datetime in queue OR stop queue if no such char in 1vs1pvp queue
-                    string[,] get_char_id = mysql.GetMysqlSelect($"SELECT `character_id` FROM `characters` WHERE `character_name`='{packet_data[3]}'").Result;
-                    if (get_char_id.GetLength(0) != 1)
+                    //string[,] get_char_id = mysql.GetMysqlSelect($"SELECT `character_id` FROM `characters` WHERE `character_name`='{packet_data[3]}'").Result;
+                    string get_char_id = null;
+
+                    foreach (string _keys in Server.PlayersAwaiting.Keys)
+                    {
+                        if (Server.PlayersAwaiting[_keys].GetCharacterName()== packet_data[3] && Server.PlayersAwaiting[_keys].GetCharacterTicket() == packet_data[2])
+                        {
+                            get_char_id = _keys;
+                            break;
+                        }
+                    }
+                    
+                    if (get_char_id==null)
                     {
                         Console.WriteLine(DateTime.Now + ": send problem 4~0~0~nst to user from - " + endpoint_address);
                         return $"4~0~0~nst"; 
                     }
 
-                    if (!Server.PlayersAwaiting.ContainsKey(get_char_id[0, 0]))
+                    if (!Server.PlayersAwaiting.ContainsKey(get_char_id))
                     {
                         Console.WriteLine(DateTime.Now + ": send error - no such player in queue - to user from - " + endpoint_address);
                         return $"4~0~0~nst";
@@ -320,44 +331,35 @@ namespace setup_server
 
 
                     //remove player for timeout
-                    if (Math.Abs(Server.PlayersAwaiting[get_char_id[0, 0]].WhenStarted().Subtract(DateTime.Now).TotalSeconds)> Server.LimitForLonelyPlayerToLoseQueue)
+                    if (Math.Abs(Server.PlayersAwaiting[get_char_id].WhenStarted().Subtract(DateTime.Now).TotalSeconds)> Server.LimitForLonelyPlayerToLoseQueue)
                     {
-                        Server.PlayersAwaiting.Remove(get_char_id[0, 0]);
+                        Server.PlayersAwaiting.Remove(get_char_id);
                         Console.WriteLine(DateTime.Now + $": player {packet_data[3]} removed from any queues for timeout, to user from - " + endpoint_address);
                         return $"3~101~timeout";
                     }
 
-                    if (Server.PlayersAwaiting.ContainsKey(get_char_id[0,0]) && (Server.PlayersAwaiting[get_char_id[0, 0]].GetCurrentPlayerStatus()==PlayerStatus.free || Server.PlayersAwaiting[get_char_id[0, 0]].GetCurrentPlayerStatus() == PlayerStatus.isBusy))
+                    if (Server.PlayersAwaiting.ContainsKey(get_char_id) && (Server.PlayersAwaiting[get_char_id].GetCurrentPlayerStatus()==PlayerStatus.free || Server.PlayersAwaiting[get_char_id].GetCurrentPlayerStatus() == PlayerStatus.isBusy))
                     {
-                        Server.PlayersAwaiting[get_char_id[0, 0]].Update();
+                        Server.PlayersAwaiting[get_char_id].Update();
                         return $"4~0~0~0";
                     }                    
 
-                    if (Server.PlayersAwaiting.ContainsKey(get_char_id[0, 0]) && Server.PlayersAwaiting[get_char_id[0, 0]].GetCurrentPlayerStatus() == PlayerStatus.ischeckedOrganization)
+                    if (Server.PlayersAwaiting.ContainsKey(get_char_id) && Server.PlayersAwaiting[get_char_id].GetCurrentPlayerStatus() == PlayerStatus.ischeckedOrganization)
                     {
-                        /*
-                        //10 seconds await before start
-                        if (Server.PlayersAwaiting[get_char_id[0, 0]].GetTimeOfPassCheckOK().AddSeconds(10)<DateTime.Now)
-                        {
-                            Server.PlayersAwaiting[get_char_id[0, 0]].SetStatusToREADY();
-                        }
-                        //====================================
-                        */
-
-                        Server.PlayersAwaiting[get_char_id[0, 0]].Update();
+                        Server.PlayersAwaiting[get_char_id].Update();
                         Console.WriteLine(DateTime.Now + ": send get ready 4~0~2~0 to user from - " + endpoint_address);
                         return $"4~0~2~0"; //GGEEETTT RRREEAAAADDDYYY
                     }
 
-                    if (Server.PlayersAwaiting.ContainsKey(get_char_id[0, 0]) && Server.PlayersAwaiting[get_char_id[0, 0]].GetCurrentPlayerStatus() == PlayerStatus.isReady)
+                    if (Server.PlayersAwaiting.ContainsKey(get_char_id) && Server.PlayersAwaiting[get_char_id].GetCurrentPlayerStatus() == PlayerStatus.isReady)
                     {
-                        string _new_ticket = Server.PlayersAwaiting[get_char_id[0, 0]].GetCharacterNewGeneratedTicket();
-                        string _old_ticket = Server.PlayersAwaiting[get_char_id[0, 0]].GetCharacterTicket();
-                        string _new_session = Server.PlayersAwaiting[get_char_id[0, 0]].GetNewSession();
-                        string _game_hub = Server.PlayersAwaiting[get_char_id[0, 0]].GetGameHub();
+                        string _new_ticket = Server.PlayersAwaiting[get_char_id].GetCharacterNewGeneratedTicket();
+                        string _old_ticket = Server.PlayersAwaiting[get_char_id].GetCharacterTicket();
+                        string _new_session = Server.PlayersAwaiting[get_char_id].GetNewSession();
+                        string _game_hub = Server.PlayersAwaiting[get_char_id].GetGameHub();
                         functions.ChangeTicketInPlayer(_old_ticket, _new_ticket);
                         Console.WriteLine(DateTime.Now + $": changed old ticket {_old_ticket} to new {_new_ticket}, started session {_new_session} to {endpoint_address}");
-                        Server.PlayersAwaiting.Remove(get_char_id[0, 0]);
+                        Server.PlayersAwaiting.Remove(get_char_id);
                         return $"4~0~3~{_new_ticket}~{_new_session}~{_game_hub}";
                     }
 

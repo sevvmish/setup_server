@@ -34,9 +34,8 @@ namespace setup_server
                 for (int i = 0; i < CurrentPlayers.Count; i++)
                 {
                     CurrentPlayers[i].SetStatusToChecked();
+                    CleanChekedStatusAfterSecondsAnyWay();
                 }
-
-            
             } 
             else
             {
@@ -47,6 +46,33 @@ namespace setup_server
                 Server.GameSessionsAwaiting.Remove(this);
             }
 
+        }
+
+        public async void CleanChekedStatusAfterSecondsAnyWay()
+        {
+            int _delayTime = (int)Server.TimeForMakingIsChekedToREADY * 1000 + 10000;
+            await Task.Delay(_delayTime);
+
+            /*
+            SessionStatus = PlayerStatus.free;
+            for (int i = 0; i < CurrentPlayers.Count; i++)
+            {
+                CurrentPlayers[i].ResetPlayerStatusToNonBusy();
+                
+            }
+            */
+
+            Console.WriteLine(DateTime.Now + ": players deleted and session stopped because to long for waiting");
+
+            foreach (string keyInPlayerWaiting in Server.PlayersAwaiting.Keys)
+            {
+                if (CurrentPlayers.Contains(Server.PlayersAwaiting[keyInPlayerWaiting]))
+                {
+                    Server.PlayersAwaiting.Remove(keyInPlayerWaiting);
+                }
+            }
+
+            Server.GameSessionsAwaiting.Remove(this);
         }
 
         public PlayerStatus GetSessionStatus()

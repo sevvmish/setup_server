@@ -23,6 +23,7 @@ namespace setup_server
         public const float LimitForIdlePlayerToLoseQueue = 6f;
         public const float LimitForLonelyPlayerToLoseQueue = 700f;
         public const float TimeForWaitBeforeAddingBot = 10f;
+        public const float TimeForMakingIsChekedToREADY = 10f;
 
         //gamehubs cheking
 
@@ -376,7 +377,7 @@ namespace setup_server
                                 //set ready status for players whis checked and 10 seconds waited
                                 if (item.GetPlayers().Count > 0)
                                 {
-                                    if (item.GetSessionStatus() == PlayerStatus.ischeckedOrganization && item.GetWhenCheckWasOK().AddSeconds(10) < DateTime.Now)
+                                    if (item.GetSessionStatus() == PlayerStatus.ischeckedOrganization && item.GetWhenCheckWasOK().AddSeconds(TimeForMakingIsChekedToREADY) < DateTime.Now)
                                     {
                                         item.SetAllPlayersToReadyStatus();
                                     }
@@ -492,8 +493,16 @@ namespace setup_server
 
                     CurrentTime += 2000;
                     if (CurrentTime > starter.stopWatch.ElapsedMilliseconds)
-                    {                        
-                        await Task.Delay((int)(CurrentTime - starter.stopWatch.ElapsedMilliseconds));
+                    {
+                        try
+                        {
+                            await Task.Delay((int)(CurrentTime - starter.stopWatch.ElapsedMilliseconds));
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine(ex);
+                        }
+                        
                     }
                 }
 
