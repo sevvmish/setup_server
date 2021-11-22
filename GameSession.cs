@@ -12,9 +12,10 @@ namespace setup_server
         private List<PlayerForGameSession> CurrentPlayers = new List<PlayerForGameSession>();
         private DateTime WhenCheckWasOK;
         private PlayerStatus SessionStatus;
-
+        
         public GameSessions(List<PlayerForGameSession> _current_players)
         {
+           
             //CurrentPlayers = _current_players;
             for (int i = 0; i < _current_players.Count; i++)
             {
@@ -43,11 +44,13 @@ namespace setup_server
                 {
                     CurrentPlayers[i].ResetPlayerStatusToNonBusy();                    
                 }
+                
                 Server.GameSessionsAwaiting.Remove(this);
             }
 
         }
 
+      
         public async void CleanChekedStatusAfterSecondsAnyWay()
         {
             int _delayTime = (int)Server.TimeForMakingIsChekedToREADY * 1000 + 10000;
@@ -222,13 +225,13 @@ namespace setup_server
 
                             if (i == 0)
                             {
-                                x = -5;
+                                x = -7;
                                 z = 0;
                                 rot_y = 90;
                             }
                             else
                             {
-                                x = 5;
+                                x = 7;
                                 z = 0;
                                 rot_y = 270;
                             }
@@ -241,13 +244,13 @@ namespace setup_server
 
                                 if (i == 0)
                                 {                                   
-                                    x = -5;
+                                    x = -7;
                                     z = -3;
                                     rot_y = 90;
                                 }
                                 else
                                 {                                   
-                                    x = -5;
+                                    x = -7;
                                     z = 3;
                                     rot_y = 90;
                                 }
@@ -258,13 +261,13 @@ namespace setup_server
 
                                 if (i == 2)
                                 {
-                                    x = 5;
+                                    x = 7;
                                     z = 3;
                                     rot_y = 270;
                                 }
                                 else
                                 {
-                                    x = 5;
+                                    x = 7;
                                     z = -3;
                                     rot_y = 270;
                                 }
@@ -294,7 +297,7 @@ namespace setup_server
 
                     for (int i = 0; i < _count; i++)
                     {
-                        list_of_chars.Append(CurrentPlayers[i] + ", ");
+                        list_of_chars.Append(CurrentPlayers[i].GetCharacterName() + ", ");
                     }
 
                     Console.WriteLine(DateTime.Now + ": started organazing PVP for " + list_of_chars.ToString());
@@ -306,7 +309,7 @@ namespace setup_server
 
                     for (int i = 0; i < _count; i++)
                     {
-                        list_of_chars.Append(CurrentPlayers[i] + ", ");
+                        list_of_chars.Append(CurrentPlayers[i].GetCharacterName() + ", ");
                     }
 
                     Console.WriteLine(DateTime.Now + ": failed organizing PVP -" + list_of_chars.ToString());
@@ -480,5 +483,25 @@ namespace setup_server
         isBusy,
         ischeckedOrganization,
         isReady
+    }
+
+    class GameSessionResults
+    {
+        private string SessionID;
+        private List<PlayerForGameSession> CurrentPlayers = new List<PlayerForGameSession>();
+
+        public GameSessionResults(string _sessID)
+        {
+            SessionID = _sessID;
+            
+        }
+
+        public void AddPlayer(PlayerForGameSession _player)
+        {
+            if (!CurrentPlayers.Contains(_player))
+            {
+                CurrentPlayers.Add(_player);
+            }
+        }
     }
 }

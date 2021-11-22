@@ -359,6 +359,14 @@ namespace setup_server
                         string _game_hub = Server.PlayersAwaiting[get_char_id].GetGameHub();
                         functions.ChangeTicketInPlayer(_old_ticket, _new_ticket);
                         Console.WriteLine(DateTime.Now + $": changed old ticket {_old_ticket} to new {_new_ticket}, started session {_new_session} to {endpoint_address}");
+                        
+                        if (!Server.GameSessionWaitingForResult.ContainsKey(_new_session))
+                        {
+                            Server.GameSessionWaitingForResult.Add(_new_session, new GameSessionResults(_new_session));
+                        }
+                        Server.GameSessionWaitingForResult[_new_session].AddPlayer(Server.PlayersAwaiting[get_char_id]);
+
+
                         Server.PlayersAwaiting.Remove(get_char_id);
                         return $"4~0~3~{_new_ticket}~{_new_session}~{_game_hub}";
                     }

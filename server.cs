@@ -19,7 +19,10 @@ namespace setup_server
         public static Dictionary<string, DateTime> pvp1vs1 = new Dictionary<string, DateTime>();
         //public static Dictionary<string, Player_data> TemporaryDataForStartingGameSession = new Dictionary<string, Player_data>();
         public static Dictionary<string, PlayerForGameSession> PlayersAwaiting = new Dictionary<string, PlayerForGameSession>();
+        
         public static HashSet<GameSessions> GameSessionsAwaiting = new HashSet<GameSessions>();
+        public static Dictionary<string, GameSessionResults> GameSessionWaitingForResult = new Dictionary<string, GameSessionResults>();
+
         public const float LimitForIdlePlayerToLoseQueue = 6f;
         public const float LimitForLonelyPlayerToLoseQueue = 700f;
         public const float TimeForWaitBeforeAddingBot = 10f;
@@ -40,7 +43,7 @@ namespace setup_server
         private static IPEndPoint localendpoint_tcp;
         private static Socket socket_tcp;
         private const int port_tcp = 2326;
-        private const int max_connections = 1000;
+        private const int max_connections = 100000;
         //private static StringBuilder raw_data_received_tcp = new StringBuilder(1024);
         //private static byte[] buffer_received_tcp = new byte[1024];
         private static byte[] buffer_send_tcp = new byte[1024];
@@ -387,6 +390,7 @@ namespace setup_server
                                 //cheking for gamesession with allready got away players=======================
                                 if (item.GetPlayers().Count == 0)
                                 {
+
                                     GameSessionsAwaiting.Remove(item);
                                 }
                             }
