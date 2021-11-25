@@ -374,6 +374,47 @@ namespace setup_server
 
                 }
 
+                //receive data about played games for statistics    5~0~session~number of players~ticket pl1~ score pl1~ticket pl2 ~ score pl2
+                if (packet_data.Length >= 6 && (packet_data[0] + packet_data[1]) == "50")
+                {
+                    for (int i = 0; i < packet_data.Length; i++)
+                    {
+                        if (!StringChecker(packet_data[i]))
+                        {
+                            Console.WriteLine(DateTime.Now + ": problem with getting data about played session -> " + packet_data[2]);
+                            return $"5~0~er1"; //wrong digits or signs                    
+                        }
+                    }
+
+                    if (!Server.GameSessionWaitingForResult.ContainsKey(packet_data[2]))
+                    {
+                        Console.WriteLine(DateTime.Now + ": problem with getting data about played session - no such session awaiting -> " + packet_data[2]);
+                        return $"5~0~er2"; //wrong session ID
+                    }
+
+                    int _number = int.Parse(packet_data[3]);
+
+                    int x = 4;
+                    for (int i = 0; i < _number; i++)
+                    {
+                        foreach (var items in Server.GameSessionWaitingForResult[packet_data[2]].CurrentPlayers)
+                        {
+                            Console.WriteLine(items.GetCharacterNewGeneratedTicket() + " - "  + packet_data[x]);
+
+                            if (items.GetCharacterNewGeneratedTicket() == packet_data[x])
+                            {
+                                Console.WriteLine(items.GetCharacterNewGeneratedTicket() + " = " + packet_data[x] + " :"+ int.Parse(packet_data[x + 1]));
+                                items.ManageScore = int.Parse(packet_data[x + 1]);
+                            }
+                        }
+
+                        x += 2;
+                    }
+
+                    Console.WriteLine(DateTime.Now + ": data about played session received OK -> " + packet_data[2]);
+                    return $"5~0~OK";
+                }
+
             }
             catch (Exception ex)
             {

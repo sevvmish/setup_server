@@ -345,6 +345,8 @@ namespace setup_server
         private PlayerStatus CurrentPlayerStatus;
         private DateTime WhenPassedCheckOK;
         private string GameHub = "0";
+        private int Score;
+
 
         private int PlayerPVPRaiting;
         private bool isBusyForSession;
@@ -361,6 +363,20 @@ namespace setup_server
             WhenLastUpdateSignal = DateTime.Now;
             CurrentPlayerStatus = PlayerStatus.free;
             WhenPassedCheckOK = DateTime.Now;
+        }
+
+        public int ManageScore
+        {
+            get
+            {
+                return Score;
+            }
+
+            set
+            {
+                Score = value;
+            }
+
         }
 
         public DateTime GetTimeOfPassCheckOK()
@@ -488,7 +504,7 @@ namespace setup_server
     class GameSessionResults
     {
         private string SessionID;
-        private List<PlayerForGameSession> CurrentPlayers = new List<PlayerForGameSession>();
+        public List<PlayerForGameSession> CurrentPlayers = new List<PlayerForGameSession>();
 
         public GameSessionResults(string _sessID)
         {
