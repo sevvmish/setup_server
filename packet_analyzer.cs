@@ -347,7 +347,7 @@ namespace setup_server
                     if (Server.PlayersAwaiting.ContainsKey(get_char_id) && Server.PlayersAwaiting[get_char_id].GetCurrentPlayerStatus() == PlayerStatus.ischeckedOrganization)
                     {
                         Server.PlayersAwaiting[get_char_id].Update();
-                        Console.WriteLine(DateTime.Now + ": send get ready 4~0~2~0 to user from - " + endpoint_address);
+                        //Console.WriteLine(DateTime.Now + ": send get ready 4~0~2~0 to user from - " + endpoint_address);
                         return $"4~0~2~0"; //GGEEETTT RRREEAAAADDDYYY
                     }
 
@@ -365,7 +365,7 @@ namespace setup_server
                             Server.GameSessionWaitingForResult.Add(_new_session, new GameSessionResults(_new_session));
                         }
                         Server.GameSessionWaitingForResult[_new_session].AddPlayer(Server.PlayersAwaiting[get_char_id]);
-
+                        Task.Run(() => Server.GameSessionWaitingForResult[_new_session].RegisterNewSessionDataByPlayerID(_new_ticket));
 
                         Server.PlayersAwaiting.Remove(get_char_id);
                         return $"4~0~3~{_new_ticket}~{_new_session}~{_game_hub}";
@@ -399,12 +399,14 @@ namespace setup_server
                     {
                         foreach (var items in Server.GameSessionWaitingForResult[packet_data[2]].CurrentPlayers)
                         {
-                            Console.WriteLine(items.GetCharacterNewGeneratedTicket() + " - "  + packet_data[x]);
+                            
 
                             if (items.GetCharacterNewGeneratedTicket() == packet_data[x])
                             {
                                 Console.WriteLine(items.GetCharacterNewGeneratedTicket() + " = " + packet_data[x] + " :"+ int.Parse(packet_data[x + 1]));
                                 items.ManageScore = int.Parse(packet_data[x + 1]);
+                                string ID = packet_data[x];
+                                Task.Run(()=> Server.GameSessionWaitingForResult[packet_data[2]].RegisterNewSessionDataRESULTSByPlayerID(ID));
                             }
                         }
 

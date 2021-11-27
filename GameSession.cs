@@ -512,6 +512,101 @@ namespace setup_server
             
         }
 
+        public void RegisterNewSessionDataByPlayerID(string _playerID)
+        {
+            PlayerForGameSession _player = null;
+
+            for (int i = 0; i < CurrentPlayers.Count; i++)
+            {
+                if (CurrentPlayers[i].GetCharacterNewGeneratedTicket()==_playerID)
+                {
+                    _player = CurrentPlayers[i];
+                    break;
+                }
+            }
+
+            if (_player == null)
+            {
+                Console.WriteLine(DateTime.Now + ": error registring new session data in DB - no such ticket " + _playerID);
+                return;
+            }
+
+            int typeOfPVP = (int)_player.GetPlayerGameType();
+            
+            bool result = mysql.ExecuteSQLInstruction($"INSERT INTO `session_archive`(`character_id`, `session_id`, `session_type_id`, `date_n_time`, `player_id`) VALUES('{_player.GetCharacterID()}', '{SessionID}', '{typeOfPVP}', '{DateTime.Now}', '{_player.GetCharacterNewGeneratedTicket()}')").Result;
+            
+            if (result)
+            {
+                Console.WriteLine(DateTime.Now + ": registered new session for player " + _playerID);
+            }
+            else
+            {
+                Console.WriteLine(DateTime.Now + ": error registring new session data in DB - DB error for " + _playerID);
+            }
+        }
+
+        public void RegisterNewSessionDataRESULTSByPlayerID(string _playerID)
+        {
+            Console.WriteLine("what came to reg result " + _playerID);
+            PlayerForGameSession _player = null;
+
+            for (int i = 0; i < CurrentPlayers.Count; i++)
+            {
+                Console.WriteLine("all tickets in wating for result: " + CurrentPlayers[i].GetCharacterNewGeneratedTicket());
+                if (CurrentPlayers[i].GetCharacterNewGeneratedTicket() == _playerID)
+                {
+                    _player = CurrentPlayers[i];
+                    break;
+                }
+            }
+
+            if (_player == null)
+            {
+                Console.WriteLine(DateTime.Now + ": error registring new session data results in DB - no such ticket " + _playerID);
+                return;
+            }
+
+            if (_player.ManageScore == 0)
+            {
+                return;
+            }
+
+            int typeOfPVP = (int)_player.GetPlayerGameType();
+
+            string [,] pre_result = mysql.GetMysqlSelect($"SELECT `session_archive_id` FROM `session_archive` WHERE (`character_id`='{_player.GetCharacterID()}' AND `session_id`='{SessionID}' AND `player_id`='{_player.GetCharacterNewGeneratedTicket()}')").Result;
+
+            if (pre_result.GetLength(0)>0)
+            {
+                bool result = mysql.ExecuteSQLInstruction($"UPDATE `session_archive` SET `score`='{_player.ManageScore}' WHERE (`character_id`='{_player.GetCharacterID()}' AND `session_id`='{SessionID}' AND `player_id`='{_player.GetCharacterNewGeneratedTicket()}')").Result;
+
+                if (result)
+                {
+                    Console.WriteLine(DateTime.Now + ": registered new session result for player " + _playerID);
+                }
+                else
+                {
+                    Console.WriteLine(DateTime.Now + ": error registring new session data result  in DB - DB error for " + _playerID);
+                }
+            }
+            else
+            {
+                Console.WriteLine(DateTime.Now + ": error registring new session data result in DB - no such player or session for " + _playerID);
+            }
+
+
+            Task.Run(()=> KillThisSession());
+        }
+
+        private async void KillThisSession()
+        {
+            await Task.Delay(2000);
+            CurrentPlayers.Clear();
+            Server.GameSessionWaitingForResult.Remove(SessionID);
+
+        }
+
+       
+
         public void AddPlayer(PlayerForGameSession _player)
         {
             if (!CurrentPlayers.Contains(_player))

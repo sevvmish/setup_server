@@ -29,10 +29,25 @@ namespace setup_server
         {
             stopWatch.Start();
             data_config.Init_data_config();
-          
+
+            //Task.Run(() => er());
+
             Server.Server_init_TCP();
 
             Console.ReadKey();
+
+        }
+
+        static async void er()
+        {
+            while (1 == 1)
+            {
+                await Task.Delay(2000);
+                Console.WriteLine("waiting sessions: " + Server.GameSessionsAwaiting.Count);
+                Console.WriteLine("waiting result sessions: " + Server.GameSessionWaitingForResult.Count);
+                Console.WriteLine("waiting pvvp1v1: " + Server.pvp1vs1.Count + "    send ping-" + Server.SendPingsList.Count + "    receive pi-" + Server.ReceivedPingList.Count  + "    player awaiting: " + Server.PlayersAwaiting.Count);
+                Console.WriteLine("===================================================");
+            }
 
         }
     }
