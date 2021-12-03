@@ -31,6 +31,7 @@ namespace setup_server
             data_config.Init_data_config();
 
             //Task.Run(() => er());
+            functions.ReAssessExperienceByCharID("227");
 
             Server.Server_init_TCP();
 

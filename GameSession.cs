@@ -547,7 +547,7 @@ namespace setup_server
 
         public void RegisterNewSessionDataRESULTSByPlayerID(string _playerID)
         {
-            Console.WriteLine("what came to reg result " + _playerID);
+            
             PlayerForGameSession _player = null;
 
             for (int i = 0; i < CurrentPlayers.Count; i++)
@@ -577,7 +577,7 @@ namespace setup_server
 
             if (pre_result.GetLength(0)>0)
             {
-                bool result = mysql.ExecuteSQLInstruction($"UPDATE `session_archive` SET `score`='{_player.ManageScore}' WHERE (`character_id`='{_player.GetCharacterID()}' AND `session_id`='{SessionID}' AND `player_id`='{_player.GetCharacterNewGeneratedTicket()}')").Result;
+                bool result = mysql.ExecuteSQLInstruction($"UPDATE `session_archive` SET `when_ended`='{DateTime.Now}', `score`='{_player.ManageScore}' WHERE (`character_id`='{_player.GetCharacterID()}' AND `session_id`='{SessionID}' AND `player_id`='{_player.GetCharacterNewGeneratedTicket()}')").Result;
 
                 if (result)
                 {

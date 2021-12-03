@@ -21,11 +21,11 @@ namespace setup_server
             return result;
         }
 
-      
+
         public static string GetTicketByCharID(string charID)
-        {            
+        {
             string[,] result = mysql.GetMysqlSelect($"SELECT `ticket_id` FROM `users` WHERE `user_id`= (SELECT characters.user_id FROM characters WHERE characters.character_id = {charID})").Result;
-            
+
             return result[0, 0];
         }
 
@@ -55,14 +55,14 @@ namespace setup_server
             //0:1, 1:1, 2:1, 3:1, 4:1, 5:1, 6:1, 7:1
             //0:2, 1:2,      3:2, 4:2,      6:2, 7:2
 
-            int[,] talents_arr;            
+            int[,] talents_arr;
             int MaxTalents = 11;
 
             FromStringToArrTalents(out talents_arr, talents_data);
 
-            
 
-            if (talents_arr.GetLength(0)!=8 || talents_arr.GetLength(1)!=3)
+
+            if (talents_arr.GetLength(0) != 8 || talents_arr.GetLength(1) != 3)
             {
                 return false;
             }
@@ -73,12 +73,12 @@ namespace setup_server
             {
                 sum += item;
             }
-            if (sum>MaxTalents)
+            if (sum > MaxTalents)
             {
                 return false;
             }
             //uniques
-            if ((talents_arr[2, 0] + talents_arr[2, 1])>1)
+            if ((talents_arr[2, 0] + talents_arr[2, 1]) > 1)
             {
                 return false;
             }
@@ -91,7 +91,7 @@ namespace setup_server
                 return false;
             }
             //get unique 2
-            if ((talents_arr[0,0] + talents_arr[1, 0]) < 2 && talents_arr[2, 0]==1)
+            if ((talents_arr[0, 0] + talents_arr[1, 0]) < 2 && talents_arr[2, 0] == 1)
             {
                 return false;
             }
@@ -113,7 +113,7 @@ namespace setup_server
             {
                 return false;
             }
-            if ((talents_arr[0, 1] + talents_arr[1, 1] + talents_arr[2,1] + talents_arr[3, 1] + talents_arr[4, 1] + talents_arr[5, 1] + talents_arr[6, 1]) < 6 && talents_arr[7, 1] == 1)
+            if ((talents_arr[0, 1] + talents_arr[1, 1] + talents_arr[2, 1] + talents_arr[3, 1] + talents_arr[4, 1] + talents_arr[5, 1] + talents_arr[6, 1]) < 6 && talents_arr[7, 1] == 1)
             {
                 return false;
             }
@@ -187,7 +187,150 @@ namespace setup_server
 
         }
 
-        
+        public static void ReAssessExperienceByCharID(string charID)
+        {
+
+            string[,] all_data = mysql.GetMysqlSelect($"SELECT `session_archive_id`, `session_type_id`, `score`, `when_ended` FROM `session_archive` WHERE (`character_id`='{charID}' AND `is_checked`='0')").Result;
+
+            if (all_data.GetLength(0) == 0 || all_data[0, 0]=="error")
+            {                
+                return;
+            }
+
+            if (string.IsNullOrEmpty(all_data[0, 3]))
+            {
+                Console.WriteLine(DateTime.Now + " error - no end date for archive game for player " + charID);
+                return;
+            }
+
+            Console.WriteLine(all_data[0,0] + " - " + all_data[0, 1]);
+            Console.WriteLine(all_data[1, 0] + " - " + all_data[1, 1]);
+            Console.WriteLine(all_data[2, 0] + " - " + all_data[2, 1]);
+                    
+            string[,] old_data_raiting = mysql.GetMysqlSelect($"SELECT `pvp_raiting`, `pve_raiting`, `xp_points` FROM `character_raiting` WHERE `character_id`='{charID}'").Result;
+
+            if (old_data_raiting.GetLength(0) == 0 || all_data[0, 0] == "error")
+            {
+                Console.WriteLine(DateTime.Now + ": error in getting data from raiting table for character " + charID);
+                return;
+            }
+
+            int PVPscoreToAdd = int.Parse(old_data_raiting[0, 0]);
+            int PVEscoreToAdd = int.Parse(old_data_raiting[0, 1]);
+            int EXPtoAdd = int.Parse(old_data_raiting[0, 2]);
+
+            for (int i = 0; i < all_data.GetLength(0); i++)
+            {
+                try
+                {
+                    string session_archive_id = all_data[i, 0];
+                    int session_type_id = int.Parse(all_data[i, 1]);
+                    int score = int.Parse(all_data[i, 2]);
+
+                    //make is_checked to true
+                    Task.Run(() => mysql.ExecuteSQLInstruction($"UPDATE `session_archive` SET `is_checked`='1' WHERE `session_archive_id`='{session_archive_id}'").Result);
+                                      
+                    EXPtoAdd += GetXP(score, session_type_id);
+                    bool isPVP = isSessionTypePVP(session_type_id);
+
+                    if (isPVP)
+                    {
+                        PVPscoreToAdd += GetRaiting(score, session_type_id);
+                    }
+                    else
+                    {
+                        PVEscoreToAdd = GetRaiting(score, session_type_id);
+                    }                                        
+
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex);
+                    return;
+                }
+            }
+
+            bool result = mysql.ExecuteSQLInstruction($"UPDATE `character_raiting` SET `pvp_raiting`='{PVPscoreToAdd}',`pve_raiting`='{PVEscoreToAdd}',`xp_points`='{EXPtoAdd}' WHERE `character_id`='{charID}'").Result;
+
+            if (!result)
+            {
+                Console.WriteLine(DateTime.Now + ": error trying update new raiting data to character " + charID);
+            }
+        }
+
+
+        //DATA for XP and raiting assessing===============================
+        public static int XPforLostBattle = 100;
+        //================================================================
+
+        public static int GetXP(int _points, int session_type)
+        {
+            switch (session_type)
+            {
+                case 1:
+                    if (_points == 0) return XPforLostBattle;
+                    break;
+                case 2:
+
+                    break;
+                case 3:
+
+                    break;
+            }
+
+            return 0;
+        }
+
+        public static int GetRaiting(int _points, int session_type)
+        {
+            switch(session_type)
+            {
+                case 1:
+                    if (_points == 0) return -1;
+                    break;
+                case 2:
+
+                    break;
+                case 3:
+
+                    break;
+            }
+
+            return 0;
+        }
+
+        public static bool isSessionTypePVP(int session_type)
+        {
+            List<int> types = new List<int> { 1, 2 };
+
+            if (types.Contains(session_type))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+                        
+        }
+
+        public static bool isSessionTypePVE(int session_type)
+        {
+            List<int> types = new List<int> { 5, 6 };
+
+            if (types.Contains(session_type))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+
+        }
+
+
+
 
     }
 }
