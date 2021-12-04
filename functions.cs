@@ -189,24 +189,14 @@ namespace setup_server
 
         public static void ReAssessExperienceByCharID(string charID)
         {
-
+                        
             string[,] all_data = mysql.GetMysqlSelect($"SELECT `session_archive_id`, `session_type_id`, `score`, `when_ended` FROM `session_archive` WHERE (`character_id`='{charID}' AND `is_checked`='0')").Result;
 
             if (all_data.GetLength(0) == 0 || all_data[0, 0]=="error")
             {                
                 return;
             }
-
-            if (string.IsNullOrEmpty(all_data[0, 3]))
-            {
-                Console.WriteLine(DateTime.Now + " error - no end date for archive game for player " + charID);
-                return;
-            }
-
-            Console.WriteLine(all_data[0,0] + " - " + all_data[0, 1]);
-            Console.WriteLine(all_data[1, 0] + " - " + all_data[1, 1]);
-            Console.WriteLine(all_data[2, 0] + " - " + all_data[2, 1]);
-                    
+                                          
             string[,] old_data_raiting = mysql.GetMysqlSelect($"SELECT `pvp_raiting`, `pve_raiting`, `xp_points` FROM `character_raiting` WHERE `character_id`='{charID}'").Result;
 
             if (old_data_raiting.GetLength(0) == 0 || all_data[0, 0] == "error")
@@ -223,6 +213,13 @@ namespace setup_server
             {
                 try
                 {
+
+                    if (all_data[i, 3] == "awaiting")
+                    {
+                        Console.WriteLine(DateTime.Now + " error - no end date for archive game for player " + charID);
+                        continue;
+                    }
+
                     string session_archive_id = all_data[i, 0];
                     int session_type_id = int.Parse(all_data[i, 1]);
                     int score = int.Parse(all_data[i, 2]);
@@ -250,6 +247,10 @@ namespace setup_server
                 }
             }
 
+            PVPscoreToAdd = PVPscoreToAdd < 0 ? 0 : PVPscoreToAdd;
+            PVEscoreToAdd = PVEscoreToAdd < 0 ? 0 : PVEscoreToAdd;
+            EXPtoAdd = EXPtoAdd < 0 ? 0 : EXPtoAdd;
+
             bool result = mysql.ExecuteSQLInstruction($"UPDATE `character_raiting` SET `pvp_raiting`='{PVPscoreToAdd}',`pve_raiting`='{PVEscoreToAdd}',`xp_points`='{EXPtoAdd}' WHERE `character_id`='{charID}'").Result;
 
             if (!result)
@@ -268,7 +269,10 @@ namespace setup_server
             switch (session_type)
             {
                 case 1:
-                    if (_points == 0) return XPforLostBattle;
+                    if (_points == 0) return 100;
+                    if (_points == 1) return 200;
+                    if (_points == 2) return 300;
+                    if (_points == 3) return 400;
                     break;
                 case 2:
 
@@ -287,6 +291,9 @@ namespace setup_server
             {
                 case 1:
                     if (_points == 0) return -1;
+                    if (_points == 1) return 0;
+                    if (_points == 2) return 2;
+                    if (_points == 3) return 3;
                     break;
                 case 2:
 

@@ -35,7 +35,8 @@ namespace setup_server
                 for (int i = 0; i < CurrentPlayers.Count; i++)
                 {
                     CurrentPlayers[i].SetStatusToChecked();
-                    CleanChekedStatusAfterSecondsAnyWay();
+                    WaitAndMakePlayerReadyStatus();
+                    
                 }
             } 
             else
@@ -50,20 +51,46 @@ namespace setup_server
 
         }
 
+
+        public async void WaitAndMakePlayerReadyStatus()
+        {
+            int _delayTime = (int)Server.TimeForMakingIsChekedToREADY * 1000;
+            await Task.Delay(_delayTime);
+
+            for (int i = 0; i < CurrentPlayers.Count; i++)
+            {
+                CurrentPlayers[i].SetStatusToREADY();
+            }
+
+            CleanChekedStatusAfterSecondsAnyWay();
+        }
       
         public async void CleanChekedStatusAfterSecondsAnyWay()
         {
-            int _delayTime = (int)Server.TimeForMakingIsChekedToREADY * 1000 + 10000;
+            int _delayTime = 1000;
             await Task.Delay(_delayTime);
 
-            /*
-            SessionStatus = PlayerStatus.free;
-            for (int i = 0; i < CurrentPlayers.Count; i++)
+            while(true)
             {
-                CurrentPlayers[i].ResetPlayerStatusToNonBusy();
-                
+                bool isOK = true;
+
+                for (int i = 0; i < CurrentPlayers.Count; i++)
+                {
+                    if (CurrentPlayers[i].GetCurrentPlayerStatus()!=PlayerStatus.isGone)
+                    {
+                        isOK = false;
+                        break;
+                    }
+                }
+
+                if (isOK)
+                {
+                    break;
+                }
+
+                await Task.Delay(500);
             }
-            */
+
 
             Console.WriteLine(DateTime.Now + ": players deleted and session stopped because to long for waiting");
 
@@ -346,6 +373,21 @@ namespace setup_server
         private DateTime WhenPassedCheckOK;
         private string GameHub = "0";
         private int Score;
+        private bool isRaitingReassessed;
+
+        public bool RaitingReassessing
+        {
+            get
+            {
+                return isRaitingReassessed;
+            }
+
+            set
+            {
+                isRaitingReassessed = value;
+            }
+        }
+
 
 
         private int PlayerPVPRaiting;
@@ -461,6 +503,10 @@ namespace setup_server
         {
             return CurrentPlayerStatus;
         }
+        public void SetStatusToGONE()
+        {
+            CurrentPlayerStatus = PlayerStatus.isGone;            
+        }
 
         public void SetNewSession(string _session)
         {
@@ -498,12 +544,14 @@ namespace setup_server
         free = 0,
         isBusy,
         ischeckedOrganization,
-        isReady
+        isReady,
+        isGone
     }
 
     class GameSessionResults
     {
         private string SessionID;
+        bool isKillThisSessionStarted;
         public List<PlayerForGameSession> CurrentPlayers = new List<PlayerForGameSession>();
 
         public GameSessionResults(string _sessID)
@@ -564,12 +612,13 @@ namespace setup_server
             {
                 Console.WriteLine(DateTime.Now + ": error registring new session data results in DB - no such ticket " + _playerID);
                 return;
+            } 
+            else
+            {
+                Console.WriteLine("received data to add result for " + _player.GetCharacterName() + " - " +  _player.GetCharacterID());
             }
 
-            if (_player.ManageScore == 0)
-            {
-                return;
-            }
+           
 
             int typeOfPVP = (int)_player.GetPlayerGameType();
 
@@ -593,16 +642,45 @@ namespace setup_server
                 Console.WriteLine(DateTime.Now + ": error registring new session data result in DB - no such player or session for " + _playerID);
             }
 
+            functions.ReAssessExperienceByCharID(_player.GetCharacterID());
+            _player.RaitingReassessing = true;
 
-            Task.Run(()=> KillThisSession());
+            if (!isKillThisSessionStarted) 
+            {
+                isKillThisSessionStarted = true;
+                Task.Run(() => KillThisSession());
+            }
         }
 
         private async void KillThisSession()
         {
-            await Task.Delay(2000);
+            await Task.Delay(1000);
+
+            while (true)
+            {
+                bool isOK = true;
+
+                for (int i = 0; i < CurrentPlayers.Count; i++)
+                {
+                    if (!CurrentPlayers[i].RaitingReassessing)
+                    {
+                        isOK = false;
+                        break;
+                    }
+                }
+
+                if (isOK)
+                {
+                    break;
+                }
+
+                await Task.Delay(1000);
+            }
+
+            Console.WriteLine(DateTime.Now + ": GameSessionResult ended");
+
             CurrentPlayers.Clear();
             Server.GameSessionWaitingForResult.Remove(SessionID);
-
         }
 
        

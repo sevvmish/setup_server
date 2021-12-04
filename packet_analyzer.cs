@@ -23,7 +23,36 @@ namespace setup_server
                 string[] packet_data = data.Split('~');
                 //Console.WriteLine(data);
 
-                //receive data about character incl all stats
+                //receive data about player raitings and XP 2~1~ticket~charname
+                if (packet_data.Length == 4 && (packet_data[0] + packet_data[1]) == "21")
+                {
+                    if (!StringChecker(packet_data[2]) || !StringChecker(packet_data[3]))
+                    {
+                        Console.WriteLine(DateTime.Now + ": send problem 2~1~wds to user from - " + endpoint_address);
+                        return $"2~1~wds"; //wrong digits or signs                    
+                    }
+
+                    string[,] check_ticket = mysql.GetMysqlSelect($"SELECT `user_id` FROM `users` WHERE `ticket_id`='{packet_data[2]}'").Result;
+
+                    if (check_ticket.GetLength(0) == 0 || check_ticket[0, 0] == "error")
+                    {
+                        Console.WriteLine(DateTime.Now + ": send problem 2~1~nst to user from - " + endpoint_address);
+                        return $"2~1~nst";
+                    }
+
+                    string[,] result = mysql.GetMysqlSelect($"SELECT `pvp_raiting`, `pve_raiting`, `xp_points` FROM `character_raiting` WHERE `character_id`=(SELECT characters.character_id FROM characters WHERE characters.character_name='{packet_data[3]}')").Result;
+
+                    if (result.GetLength(0) == 0 || result[0,0]=="error")
+                    {
+                        Console.WriteLine(DateTime.Now + ": send problem 2~1~nsc to user from - " + endpoint_address);
+                        return $"2~1~nsc";
+                    }
+
+                    return $"2~1~{result[0,0]}~{result[0, 1]}~{result[0, 2]}";
+
+                }
+
+                    //receive data about character incl all stats
                 if (packet_data.Length == 4 && (packet_data[0] + packet_data[1]) == "20")
                 {
 
@@ -110,7 +139,7 @@ namespace setup_server
                     if (!Server.PlayersAwaiting.ContainsKey(char_id[0, 0])) {
                         
                         //cheking raiting
-                        string[,] PVPraiting = mysql.GetMysqlSelect($"SELECT `character_pvp_rait` FROM `character_raiting` WHERE `character_id`='{char_id[0, 0]}'").Result;
+                        string[,] PVPraiting = mysql.GetMysqlSelect($"SELECT `pvp_raiting` FROM `character_raiting` WHERE `character_id`='{char_id[0, 0]}'").Result;
                         if (PVPraiting[0, 0] == "error") PVPraiting[0, 0] = "0";
                         
                         //INIT
@@ -366,8 +395,10 @@ namespace setup_server
                         }
                         Server.GameSessionWaitingForResult[_new_session].AddPlayer(Server.PlayersAwaiting[get_char_id]);
                         Task.Run(() => Server.GameSessionWaitingForResult[_new_session].RegisterNewSessionDataByPlayerID(_new_ticket));
-
+                        
+                        Server.PlayersAwaiting[get_char_id].SetStatusToGONE();
                         Server.PlayersAwaiting.Remove(get_char_id);
+                        
                         return $"4~0~3~{_new_ticket}~{_new_session}~{_game_hub}";
                     }
 
@@ -416,6 +447,9 @@ namespace setup_server
                     Console.WriteLine(DateTime.Now + ": data about played session received OK -> " + packet_data[2]);
                     return $"5~0~OK";
                 }
+
+                
+
 
             }
             catch (Exception ex)

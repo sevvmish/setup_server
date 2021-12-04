@@ -21,6 +21,7 @@ namespace setup_server
             try
             {
                 MySqlConnection conn = new MySqlConnection(starter.MysqlConnectionData_login);
+
                 await conn.OpenAsync();
 
                 MySqlCommand command = new MySqlCommand(sql, conn);

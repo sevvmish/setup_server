@@ -16,7 +16,7 @@ namespace setup_server
         public static byte[] secret_key_for_game_servers;
         public static string InnerServerConnectionPassword;
         public static string MysqlConnectionData_login;
-        public static string address_for_data_config = @"C:\android\data"; //@"C:\android\data"  @"/home/admin/data"
+        public static string address_for_data_config = @"/home/admin/data"; //@"C:\android\data"  @"/home/admin/data"
 
         public static Stopwatch stopWatch = new Stopwatch();
 
@@ -29,10 +29,9 @@ namespace setup_server
         {
             stopWatch.Start();
             data_config.Init_data_config();
-
+            Thread.Sleep(2000);
             //Task.Run(() => er());
-            functions.ReAssessExperienceByCharID("227");
-
+            
             Server.Server_init_TCP();
 
             Console.ReadKey();

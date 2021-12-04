@@ -392,6 +392,7 @@ namespace setup_server
                             
                             foreach (GameSessions item in GameSessionsAwaiting)
                             {
+                                /*
                                 //set ready status for players whis checked and 10 seconds waited
                                 if (item.GetPlayers().Count > 0)
                                 {
@@ -401,6 +402,7 @@ namespace setup_server
                                     }
 
                                 }
+                                */
 
                                 //cheking for gamesession with allready got away players=======================
                                 if (item.GetPlayers().Count == 0)
@@ -432,7 +434,7 @@ namespace setup_server
                         foreach (string keys in PlayersAwaiting.Keys)
                         {
                             //cleaning for old unupdated============================
-                            if (PlayersAwaiting[keys].WhenLastUpdated().AddSeconds(LimitForIdlePlayerToLoseQueue) < DateTime.Now && !PlayersAwaiting[keys].isPlayerBusyForSession())
+                            if (PlayersAwaiting[keys].WhenLastUpdated().AddSeconds(LimitForIdlePlayerToLoseQueue) < DateTime.Now && PlayersAwaiting[keys].GetCurrentPlayerStatus()!=PlayerStatus.isGone && PlayersAwaiting[keys].GetCurrentPlayerStatus() != PlayerStatus.free) //!PlayersAwaiting[keys].isPlayerBusyForSession()
                             {
                                 Console.WriteLine(DateTime.Now + ": removed from queue character - " + PlayersAwaiting[keys].GetCharacterName());
                                 if (looking_for_2.Contains(PlayersAwaiting[keys]))
@@ -443,6 +445,8 @@ namespace setup_server
                                 {
                                     looking_for_4.Remove(PlayersAwaiting[keys]);
                                 }
+
+                                PlayersAwaiting[keys].ResetPlayerStatusToNonBusy();
 
                                 PlayersAwaiting.Remove(keys);
                             }
