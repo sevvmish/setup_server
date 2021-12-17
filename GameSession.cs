@@ -166,7 +166,7 @@ namespace setup_server
 
                 //get hub_ip for game:
                 
-                string Game_hub_IP = await Task<string>.Run(()=> Server.CheckAndGetGameHubs());
+                string Game_hub_IP = await Task.Run(()=> Server.CheckAndGetGameHubs());
                 Console.WriteLine(DateTime.Now + ": server chosen - " + Game_hub_IP);
                 if (Game_hub_IP=="error")
                 {

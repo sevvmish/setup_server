@@ -821,11 +821,8 @@ namespace setup_server
                 {
                     Console.WriteLine(ex);
                 }
-           
-
-
-
             }
+
             //ThreadPool.QueueUserWorkItem(o => { ReceiveAsync(); });
 
 

@@ -31,12 +31,21 @@ namespace setup_server
             data_config.Init_data_config();
             Thread.Sleep(2000);
             //Task.Run(() => er());
-            
+            Task.Run(() => sendPing());
+
             Server.Server_init_TCP();
 
             Console.ReadKey();
 
         }
+
+
+        static async void sendPing()
+        {
+            await Task.Delay(2000);
+            Console.WriteLine(Server.SendAndGetTCP_between_servers($"0~71~{InnerServerConnectionPassword}", 2323, "192.168.168.70", true) );
+        }
+
 
         static async void er()
         {
