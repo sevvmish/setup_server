@@ -180,6 +180,11 @@ namespace setup_server
             int CurrentPort_tcp = (int)CurrentPort;
             string CurrentIP_tcp = IP;
 
+            if (string.IsNullOrEmpty(IP))
+            {
+                return "error";
+            }
+
             string result = null;
 
             IPEndPoint endpoint_tcp = new IPEndPoint(IPAddress.Parse(CurrentIP_tcp), CurrentPort_tcp);
