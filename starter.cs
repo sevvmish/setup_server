@@ -31,13 +31,8 @@ namespace setup_server
             data_config.Init_data_config();
             Thread.Sleep(2000);
 
-            //Task.Run(() => er());
-            //Task.Run(() => sendPing());
-
             Server.Server_init_TCP();
-
             Console.ReadKey();
-
         }
 
 

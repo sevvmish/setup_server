@@ -23,6 +23,52 @@ namespace setup_server
                 string[] packet_data = data.Split('~');
                 //Console.WriteLine(data);
 
+                //receive data about player any INFO MESSAGES
+                if (packet_data.Length == 4 && (packet_data[0] + packet_data[1]) == "22")
+                {
+                    if (!StringChecker(packet_data[2]) || !StringChecker(packet_data[3]))
+                    {
+                        Console.WriteLine(DateTime.Now + ": send problem 2~2~wds to user from - " + endpoint_address);
+                        return $"2~2~wds"; //wrong digits or signs                    
+                    }
+
+                    string[,] check_ticket = mysql.GetMysqlSelect($"SELECT `user_id` FROM `users` WHERE `ticket_id`='{packet_data[2]}'").Result;
+
+                    if (check_ticket.GetLength(0) == 0 || check_ticket[0, 0] == "error")
+                    {
+                        Console.WriteLine(DateTime.Now + ": send problem 2~2~nst to user from - " + endpoint_address);
+                        return $"2~2~nst";
+                    }
+
+                    string[,] result = mysql.GetMysqlSelect($"SELECT `char_info_id`,`information_id` FROM `character_info` WHERE `date_informed`='' AND `character_id`=(SELECT characters.character_id FROM characters WHERE characters.character_name='{packet_data[3]}')").Result;
+
+                    if (result.GetLength(0) == 0 || result[0, 0] == "error")
+                    {
+                        Console.WriteLine(DateTime.Now + ": send problem 2~2~nsc to user from - " + endpoint_address);
+                        return $"2~2~nsc";
+                    }
+
+                    string char_info_id = result[0, 0];
+                    string information_id = result[0, 1];
+
+                    //make exact information line outdated
+                    bool isOK = mysql.ExecuteSQLInstruction($"UPDATE `character_info` SET `date_informed`='{DateTime.Now}' WHERE `char_info_id`='{char_info_id}'").Result;
+
+                    if (!isOK) Console.WriteLine(DateTime.Now + ": error setting date to char informed for - " + endpoint_address);
+
+                    //read exact message from INFORMATION
+                    result = mysql.GetMysqlSelect($"SELECT `info_topic`, `info_body` FROM `information` WHERE `information_id`='{information_id}'").Result;
+                    
+                    if (result.GetLength(0) == 0 || result[0, 0] == "error")
+                    {
+                        Console.WriteLine(DateTime.Now + ": send problem of getting message body to - " + endpoint_address);
+                        return $"2~2~nd";
+                    }
+
+                    return $"2~2~{result[0, 0]}~{result[0, 1]}";
+                }
+
+
                 //receive data about player raitings and XP 2~1~ticket~charname
                 if (packet_data.Length == 4 && (packet_data[0] + packet_data[1]) == "21")
                 {
@@ -52,7 +98,8 @@ namespace setup_server
 
                 }
 
-                    //receive data about character incl all stats
+
+                //receive data about character incl all stats
                 if (packet_data.Length == 4 && (packet_data[0] + packet_data[1]) == "20")
                 {
 
