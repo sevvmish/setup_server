@@ -152,6 +152,9 @@ namespace setup_server
                 case 2:
                     game_type_id = 2; //type of PVP - 2vs2
                     break;
+                case 3:
+                    game_type_id = 3; //battle royale
+                    break;                
             }
 
             List<string[]> char_d = new List<string[]>(_count);
@@ -166,10 +169,11 @@ namespace setup_server
 
                 //get hub_ip for game:
                 
-                string Game_hub_IP = await Task.Run(()=> Server.CheckAndGetGameHubs());
+                string Game_hub_IP = await Server.CheckAndGetGameHubs();
                 Console.WriteLine(DateTime.Now + ": server chosen - " + Game_hub_IP);
                 if (Game_hub_IP=="error")
                 {
+                    Console.WriteLine(DateTime.Now + ": error while choosing server");
                     return false;
                 }
 
@@ -252,13 +256,13 @@ namespace setup_server
 
                             if (i == 0)
                             {
-                                x = -7;
+                                x = -10;
                                 z = 0;
                                 rot_y = 90;
                             }
                             else
                             {
-                                x = 7;
+                                x = 10;
                                 z = 0;
                                 rot_y = 270;
                             }
@@ -271,14 +275,14 @@ namespace setup_server
 
                                 if (i == 0)
                                 {                                   
-                                    x = -7;
-                                    z = -3;
+                                    x = -10;
+                                    z = -2;
                                     rot_y = 90;
                                 }
                                 else
                                 {                                   
-                                    x = -7;
-                                    z = 3;
+                                    x = -10;
+                                    z = 2;
                                     rot_y = 90;
                                 }
                             } 
@@ -288,17 +292,66 @@ namespace setup_server
 
                                 if (i == 2)
                                 {
-                                    x = 7;
-                                    z = 3;
+                                    x = 10;
+                                    z = 2;
                                     rot_y = 270;
                                 }
                                 else
                                 {
-                                    x = 7;
-                                    z = -3;
+                                    x = 10;
+                                    z = -2;
                                     rot_y = 270;
                                 }
                             }
+                            break;
+
+                        case 3:
+                            team_id = i;
+                            switch(i)
+                            {
+                                case 0:
+                                    x = 10;
+                                    z = 0;
+                                    rot_y = 270;
+                                   break;
+                                case 1:
+                                    x = -10;
+                                    z = 0;
+                                    rot_y = 90;
+                                    break;
+                                case 2:
+                                    x = 0;
+                                    z = 10;
+                                    rot_y = 0;
+                                    break;
+                                case 3:
+                                    x = 0;
+                                    z = -10;
+                                    rot_y = 180;
+                                    break;
+                                case 4:
+                                    x = -8;
+                                    z = -8;
+                                    rot_y = 180;
+                                    break;
+                                case 5:
+                                    x = 8;
+                                    z = 8;
+                                    rot_y = -180;
+                                    break;
+                                case 6:
+                                    x = -8;
+                                    z = 8;
+                                    rot_y = -180;
+                                    break;
+                                case 7:
+                                    x = 8;
+                                    z = -8;
+                                    rot_y = -180;
+                                    break;
+                            }
+
+
                             break;
 
                     }
@@ -396,6 +449,7 @@ namespace setup_server
         public PlayerForGameSession(string _char_ID, string _char_name, string _char_ticket, GameTypes _player_game_type, int _pvp_rait)
         {
             Character_ID = _char_ID;
+          
             CharacterName = _char_name;
             CharacterTicket = _char_ticket;
             WhenEnteredToSearchGame = DateTime.Now;
@@ -435,6 +489,7 @@ namespace setup_server
         {
             return isBusyForSession;
         }
+              
 
         public void MakePlayerBusyForSession()
         {
@@ -535,8 +590,9 @@ namespace setup_server
         PvE_for_test = 0,
         PvP_1vs1,
         PvP_2vs2,
-        PvP_3vs3,
-        
+        PvP_battle_royale,
+        PVP_any_battle
+                
     }
 
     public enum PlayerStatus

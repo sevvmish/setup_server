@@ -133,7 +133,7 @@ namespace setup_server
                 if (packet_data.Length == 5 && (packet_data[0] + packet_data[1]) == "31")
                 {
 
-                    if (!StringChecker(packet_data[2]) || !StringChecker(packet_data[3]))
+                    if (!StringChecker(packet_data[2]) || !StringChecker(packet_data[3]) || !NumericsChecker(packet_data[4]))
                     {
                         Console.WriteLine(DateTime.Now + ": send problem 3~1~wds to user from - " + endpoint_address);
                         return $"3~1~wds"; //wrong digits or signs                    
@@ -178,6 +178,10 @@ namespace setup_server
                             WhatPVP = GameTypes.PvP_2vs2;
                             break;
                         case 3:
+                            WhatPVP = GameTypes.PvP_battle_royale;
+                            break;
+                        case 4:
+                            WhatPVP = GameTypes.PVP_any_battle;
                             break;
                     }
 
