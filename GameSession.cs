@@ -13,21 +13,17 @@ namespace setup_server
         private DateTime WhenCheckWasOK;
         private PlayerStatus SessionStatus;
         
-        public GameSessions(List<PlayerForGameSession> _current_players)
+        public GameSessions(List<PlayerForGameSession> _current_players, GameTypes _gameType)
         {
            
-            //CurrentPlayers = _current_players;
             for (int i = 0; i < _current_players.Count; i++)
             {
+                _current_players[i].SetPlayerGameType(_gameType);
+                _current_players[i].MakePlayerBusyForSession();
                 CurrentPlayers.Add(_current_players[i]);
             }
-
-            for (int i = 0; i < CurrentPlayers.Count; i++)
-            {
-                CurrentPlayers[i].MakePlayerBusyForSession();
-            }
-            //CurrentPlayers = _current_players;
-            CurrentSessionType = CurrentPlayers[0].GetPlayerGameType();
+                  
+            CurrentSessionType = _gameType;
             if (OrganizePVP(CurrentSessionType).Result)
             {
                 WhenCheckWasOK = DateTime.Now;
@@ -536,6 +532,11 @@ namespace setup_server
         public GameTypes GetPlayerGameType()
         {
             return PlayerGameType;
+        }
+
+        public void SetPlayerGameType(GameTypes _playerGametype)
+        {
+            PlayerGameType = _playerGametype;
         }
 
         public void SetNewTicketForPlayer(string _new_ticket)

@@ -29,6 +29,7 @@ namespace setup_server
         {
             stopWatch.Start();
             data_config.Init_data_config();
+            
             Thread.Sleep(2000);
 
             Server.Server_init_TCP();

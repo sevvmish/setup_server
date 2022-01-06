@@ -68,8 +68,6 @@ namespace setup_server
                 ServerUDP = new UDPServerConnector(IPAddress.Any, 2327);
                 ServerUDP.Start();
 
-
-
             });
 
             //TCP config===================================
@@ -388,7 +386,7 @@ namespace setup_server
             return Task.CompletedTask;
         }
 
-
+        
 
         public static void check_queue_for_pvp()
         {
@@ -414,12 +412,11 @@ namespace setup_server
                     
                 }
 
-
-
+          
                 List<PlayerForGameSession> looking_for_2 = new List<PlayerForGameSession>(2);
                 List<PlayerForGameSession> looking_for_4 = new List<PlayerForGameSession>(4);
                 List<PlayerForGameSession> looking_for_BR = new List<PlayerForGameSession>(HowManyPlayersInBattleRoyale);
-                List<PlayerForGameSession> looking_for_any = new List<PlayerForGameSession>();
+                List<PlayerForGameSession> looking_for_Any = new List<PlayerForGameSession>();
 
                 foreach (string keys in PlayersAwaiting.Keys)
                 {
@@ -427,50 +424,127 @@ namespace setup_server
                     if (PlayersAwaiting[keys].WhenLastUpdated().AddSeconds(LimitForIdlePlayerToLoseQueue) < DateTime.Now && PlayersAwaiting[keys].GetCurrentPlayerStatus()!=PlayerStatus.isGone /*&& PlayersAwaiting[keys].GetCurrentPlayerStatus() != PlayerStatus.free*/) 
                     {
                         Console.WriteLine(DateTime.Now + ": removed from queue character - " + PlayersAwaiting[keys].GetCharacterName());
-                        if (looking_for_2.Contains(PlayersAwaiting[keys]))
-                        {
-                            looking_for_2.Remove(PlayersAwaiting[keys]);
-                        }
-                        if (looking_for_4.Contains(PlayersAwaiting[keys]))
-                        {
-                            looking_for_4.Remove(PlayersAwaiting[keys]);
-                        }
-                        if (looking_for_BR.Contains(PlayersAwaiting[keys]))
-                        {
-                            looking_for_BR.Remove(PlayersAwaiting[keys]);
-                        }
-                        if (looking_for_any.Contains(PlayersAwaiting[keys]))
-                        {
-                            looking_for_any.Remove(PlayersAwaiting[keys]);
-                        }
-
+                       
                         PlayersAwaiting[keys].ResetPlayerStatusToNonBusy();
 
                         PlayersAwaiting.Remove(keys);
+
+                        continue;
                     }
                     //=======================================================
 
+                    if (!PlayersAwaiting[keys].isPlayerBusyForSession())
+                    {
+                        switch((int)PlayersAwaiting[keys].GetPlayerGameType())
+                        {
+                            case 1:
+                                looking_for_2.Add(PlayersAwaiting[keys]);
+                                break;
+
+                            case 2:
+                                looking_for_4.Add(PlayersAwaiting[keys]);
+                                break;
+
+                            case 3:
+                                looking_for_BR.Add(PlayersAwaiting[keys]);
+                                break;
+
+                            case 4:
+                                looking_for_Any.Add(PlayersAwaiting[keys]);
+                                break;
+                        }
+
+                    }
 
 
+                    /*                  
                     //making session for 1vs1===========
                     if (!PlayersAwaiting[keys].isPlayerBusyForSession() && PlayersAwaiting[keys].GetPlayerGameType() == GameTypes.PvP_1vs1)
                     {
                         looking_for_2.Add(PlayersAwaiting[keys]);
+
                         if (looking_for_2.Count == 2)
                         {
-                            GameSessionsAwaiting.Add(new GameSessions(looking_for_2));
+                            GameSessionsAwaiting.Add(new GameSessions(looking_for_2, GameTypes.PvP_1vs1));
                             looking_for_2.Clear();
-                        }
+                        }                        
                     }
                     //===================================
+                                        
 
 
+                    //making session for 2vs2============
+                    if (!PlayersAwaiting[keys].isPlayerBusyForSession() && PlayersAwaiting[keys].GetPlayerGameType() == GameTypes.PvP_2vs2)
+                    {
+                        looking_for_4.Add(PlayersAwaiting[keys]);
+                        if (looking_for_4.Count == 4)
+                        {
+                            GameSessionsAwaiting.Add(new GameSessions(looking_for_4, GameTypes.PvP_2vs2));
+                            looking_for_4.Clear();
+                        }
+                    }
+                    //======================================
+
+                   
+
+                    //making session for Battle Royale============
+                    if (!PlayersAwaiting[keys].isPlayerBusyForSession() && PlayersAwaiting[keys].GetPlayerGameType() == GameTypes.PvP_battle_royale)
+                    {
+                        looking_for_BR.Add(PlayersAwaiting[keys]);
+                        if (looking_for_BR.Count == HowManyPlayersInBattleRoyale)
+                        {
+                            GameSessionsAwaiting.Add(new GameSessions(looking_for_BR, GameTypes.PvP_battle_royale));
+                            looking_for_BR.Clear();
+                        }
+                    }
+                    //======================================
+
+                    
+
+
+                    //ADDING to any PVP
+                    if (!PlayersAwaiting[keys].isPlayerBusyForSession() && PlayersAwaiting[keys].GetPlayerGameType() == GameTypes.PVP_any_battle)
+                    {
+                        Console.WriteLine("here - " + looking_for_2.Count);
+
+                        if (looking_for_2.Count==1)
+                        {
+                            Console.WriteLine("ADDED to 1vs1");
+                            looking_for_2.Add(PlayersAwaiting[keys]);                            
+                            GameSessionsAwaiting.Add(new GameSessions(looking_for_2, GameTypes.PvP_1vs1));
+                            looking_for_2.Clear();                            
+                        } 
+                        else if (looking_for_4.Count > 0 && looking_for_4.Count < 4)
+                        {
+                            Console.WriteLine("ADDED to 2vs2");
+                            looking_for_4.Add(PlayersAwaiting[keys]);                                                        
+                            if (looking_for_4.Count == 4)
+                            {
+                                GameSessionsAwaiting.Add(new GameSessions(looking_for_4, GameTypes.PvP_2vs2));
+                                looking_for_4.Clear();
+                            }
+                        }
+                        else if (looking_for_BR.Count > 0 && looking_for_BR.Count < HowManyPlayersInBattleRoyale)
+                        {
+                            Console.WriteLine("ADDED to BR");
+                            looking_for_BR.Add(PlayersAwaiting[keys]);
+                            if (looking_for_BR.Count == HowManyPlayersInBattleRoyale)
+                            {
+                                GameSessionsAwaiting.Add(new GameSessions(looking_for_BR, GameTypes.PvP_battle_royale));
+                                looking_for_BR.Clear();
+                            }
+                        }
+
+                    }
+                    //======================================
+
+                    //BOTS and go========================================================================================
                     //bot for 1vs1
-                    if (looking_for_2.Count==1 && looking_for_2[0].WhenStarted().AddSeconds(TimeForWaitBeforeAddingBot1vs1)<DateTime.Now)
+                    if (looking_for_2.Count == 1 && looking_for_2[0].WhenStarted().AddSeconds(TimeForWaitBeforeAddingBot1vs1) < DateTime.Now)
                     {
                         Random rnd = new Random();
 
-                        switch(rnd.Next(1,3))
+                        switch (rnd.Next(1, 3))
                         {
                             case 1:
                                 looking_for_2.Add(new PlayerForGameSession("-1", "warrior bot", "botttt", GameTypes.PvP_1vs1, 0));
@@ -481,29 +555,16 @@ namespace setup_server
                         }
 
                         //looking_for_2.Add(new PlayerForGameSession("-1", "warrior bot", "botttt", GameTypes.PvP_1vs1, 0));
-                                
-                        GameSessionsAwaiting.Add(new GameSessions(looking_for_2));
+
+                        GameSessionsAwaiting.Add(new GameSessions(looking_for_2, GameTypes.PvP_1vs1));
                         looking_for_2.Clear();
                     }
                     //=====================================
 
-
-                    //making session for 2vs2============
-                    if (!PlayersAwaiting[keys].isPlayerBusyForSession() && PlayersAwaiting[keys].GetPlayerGameType() == GameTypes.PvP_2vs2)
-                    {
-                        looking_for_4.Add(PlayersAwaiting[keys]);
-                        if (looking_for_4.Count == 4)
-                        {
-                            GameSessionsAwaiting.Add(new GameSessions(looking_for_4));
-                            looking_for_4.Clear();
-                        }
-                    }
-                    //======================================
-
                     //bots for 2vs2
                     if (looking_for_4.Count > 0 && looking_for_4.Count < 4 && looking_for_4[0].WhenStarted().AddSeconds(TimeForWaitBeforeAddingBotFor2vs2) < DateTime.Now)
                     {
-                        
+
                         Random rnd = new Random();
 
                         int HowManyBotsToAdd = 4 - looking_for_4.Count;
@@ -519,24 +580,12 @@ namespace setup_server
                                     break;
                             }
                         }
-                      
 
-                        GameSessionsAwaiting.Add(new GameSessions(looking_for_4));
+
+                        GameSessionsAwaiting.Add(new GameSessions(looking_for_4, GameTypes.PvP_2vs2));
                         looking_for_4.Clear();
                     }
                     //=====================================
-
-                    //making session for Battle Royale============
-                    if (!PlayersAwaiting[keys].isPlayerBusyForSession() && PlayersAwaiting[keys].GetPlayerGameType() == GameTypes.PvP_battle_royale)
-                    {
-                        looking_for_BR.Add(PlayersAwaiting[keys]);
-                        if (looking_for_BR.Count == HowManyPlayersInBattleRoyale)
-                        {
-                            GameSessionsAwaiting.Add(new GameSessions(looking_for_BR));
-                            looking_for_BR.Clear();
-                        }
-                    }
-                    //======================================
 
                     //bots for Battle Royale
                     if (looking_for_BR.Count > 0 && looking_for_BR.Count < HowManyPlayersInBattleRoyale && looking_for_BR[0].WhenStarted().AddSeconds(TimeForWaitBeforeAddingBotForBattleRoyale) < DateTime.Now)
@@ -557,46 +606,160 @@ namespace setup_server
                             }
                         }
 
-                        GameSessionsAwaiting.Add(new GameSessions(looking_for_BR));
+                        GameSessionsAwaiting.Add(new GameSessions(looking_for_BR, GameTypes.PvP_battle_royale));
                         looking_for_BR.Clear();
                     }
-                    //=====================================
+                    //BOTS and go END========================================================================================
+                    */
 
-
-                    //ADDING to any PVP
-                    if (!PlayersAwaiting[keys].isPlayerBusyForSession() && PlayersAwaiting[keys].GetPlayerGameType() == GameTypes.PVP_any_battle)
-                    {
-                        if (looking_for_2.Count==1)
-                        {
-                            looking_for_2.Add(PlayersAwaiting[keys]);
-                            if (looking_for_2.Count == 2)
-                            {
-                                GameSessionsAwaiting.Add(new GameSessions(looking_for_2));
-                                looking_for_2.Clear();
-                            }
-                        } 
-                        else if (looking_for_4.Count > 0)
-                        {
-                            looking_for_4.Add(PlayersAwaiting[keys]);                                                        
-                            if (looking_for_4.Count == 4)
-                            {
-                                GameSessionsAwaiting.Add(new GameSessions(looking_for_4));
-                                looking_for_4.Clear();
-                            }
-                        }
-                        else if (looking_for_BR.Count > 0)
-                        {
-                            looking_for_BR.Add(PlayersAwaiting[keys]);
-                            if (looking_for_BR.Count == HowManyPlayersInBattleRoyale)
-                            {
-                                GameSessionsAwaiting.Add(new GameSessions(looking_for_BR));
-                                looking_for_BR.Clear();
-                            }
-                        }
-
-                    }
-                    //======================================
                 }
+
+                //Console.WriteLine(looking_for_2.Count + " - 1vs1..." + looking_for_4.Count + " - 2vs2..." + looking_for_BR.Count + " - BR...."  + looking_for_Any.Count + " - Any...");
+
+                //dealing with 1vs1=================================================
+                if (looking_for_2.Count>1)
+                {
+                    int _count = looking_for_2.Count / 2;
+                    if (_count > 0)
+                    {
+                        for (int i = 0; i < _count; i += 2)
+                        {                            
+                            GameSessionsAwaiting.Add(new GameSessions(new List<PlayerForGameSession> { looking_for_2[i], looking_for_2[i+1] }, GameTypes.PvP_1vs1));
+                            //looking_for_2.Remove(looking_for_2[0]);
+                            //looking_for_2.Remove(looking_for_2[1]);
+                        }
+                    }
+                        
+                } 
+                else if (looking_for_2.Count == 1 && looking_for_Any.Count>0)
+                {                    
+                    GameSessionsAwaiting.Add(new GameSessions(new List<PlayerForGameSession> { looking_for_2[0], looking_for_Any[0] }, GameTypes.PvP_1vs1));
+                    //looking_for_2.Remove(looking_for_2[0]);
+                    //looking_for_Any.Remove(looking_for_Any[0]);
+                }
+                else if (looking_for_2.Count == 1 && looking_for_Any.Count == 0)
+                {
+                    if (looking_for_2[0].WhenStarted().AddSeconds(TimeForWaitBeforeAddingBot1vs1) < DateTime.Now)
+                    {
+                        GameSessionsAwaiting.Add(new GameSessions(new List<PlayerForGameSession> { looking_for_2[0], GetBotForPvP(GameTypes.PvP_1vs1) }, GameTypes.PvP_1vs1));
+                        //looking_for_2.Remove(looking_for_2[0]);                        
+                    }
+                }
+                //================================================================
+
+                //dealing with 2vs2================================================
+                if (looking_for_4.Count > 3)
+                {
+                    int _count = looking_for_4.Count / 4;
+                    if (_count > 0)
+                    {
+                        for (int i = 0; i < _count; i+=4)
+                        {
+                            GameSessionsAwaiting.Add(new GameSessions(new List<PlayerForGameSession> { looking_for_4[i], looking_for_4[i+1], looking_for_4[i+2], looking_for_4[i+3] }, GameTypes.PvP_2vs2));
+                            //looking_for_4.Remove(looking_for_4[0]);
+                            //looking_for_4.Remove(looking_for_4[1]);
+                            //looking_for_4.Remove(looking_for_4[2]);
+                            //looking_for_4.Remove(looking_for_4[3]);
+                        }
+                    }
+
+                }
+                else if (looking_for_4.Count > 0 && looking_for_4.Count <= 3)
+                {
+                    int howMany = 0;
+                    List<PlayerForGameSession> _temporary2vs2 = new List<PlayerForGameSession>();
+                    
+                    for (int i = 0; i < looking_for_4.Count; i++)
+                    {
+                        howMany++;
+                        _temporary2vs2.Add(looking_for_4[i]);
+                        Console.WriteLine("added : " + looking_for_4[i].GetCharacterName());
+                        //looking_for_4.Remove(looking_for_4[i]);
+                    }
+
+                    int delta = looking_for_Any.Count > (4 - howMany) ? (4 - howMany) : looking_for_Any.Count;
+
+                    for (int i = 0; i < delta; i++)
+                    {
+                        howMany++;
+                        _temporary2vs2.Add(looking_for_Any[i]);
+                        //looking_for_Any.Remove(looking_for_Any[i]);
+                    }
+
+                    if (howMany == 4)
+                    {
+                        GameSessionsAwaiting.Add(new GameSessions(_temporary2vs2, GameTypes.PvP_2vs2));
+                    } 
+                    else if (howMany < 4 && _temporary2vs2[0].WhenStarted().AddSeconds(TimeForWaitBeforeAddingBotFor2vs2) < DateTime.Now)
+                    {
+                        for (int i = 0; i < (4 - howMany); i++)
+                        {
+                            _temporary2vs2.Add(GetBotForPvP(GameTypes.PvP_2vs2));
+                            
+                        }
+
+                        GameSessionsAwaiting.Add(new GameSessions(_temporary2vs2, GameTypes.PvP_2vs2));
+                    }                   
+                }
+                //==================================================================================================
+
+                //dealing with Battle Royale============================================================================
+                if (looking_for_BR.Count >= HowManyPlayersInBattleRoyale)
+                {
+                    int _count = looking_for_BR.Count / HowManyPlayersInBattleRoyale;
+                    if (_count > 0)
+                    {
+                        for (int i = 0; i < _count; i+=HowManyPlayersInBattleRoyale)
+                        {
+                            List<PlayerForGameSession> _temporaryBR = new List<PlayerForGameSession>();
+                            for (int u = 0; u < HowManyPlayersInBattleRoyale; u++)
+                            {
+                                _temporaryBR.Add(looking_for_BR[i+u]);
+                                //looking_for_BR.Remove(looking_for_BR[u]);
+                            }
+                            GameSessionsAwaiting.Add(new GameSessions(_temporaryBR, GameTypes.PvP_battle_royale));
+                         
+                        }
+                    }
+
+                }
+                else if (looking_for_BR.Count > 0 && looking_for_BR.Count < HowManyPlayersInBattleRoyale)
+                {
+                    int howMany = 0;
+                    List<PlayerForGameSession> _temporaryBR = new List<PlayerForGameSession>();
+
+                    for (int i = 0; i < looking_for_BR.Count; i++)
+                    {
+                        howMany++;
+                        _temporaryBR.Add(looking_for_BR[i]);
+                        //looking_for_BR.Remove(looking_for_BR[i]);
+                    }
+
+                    int delta = looking_for_Any.Count > (HowManyPlayersInBattleRoyale - howMany) ? (HowManyPlayersInBattleRoyale - howMany) : looking_for_Any.Count;
+
+                    for (int i = 0; i < delta; i++)
+                    {
+                        howMany++;
+                        _temporaryBR.Add(looking_for_Any[i]);
+                        //looking_for_Any.Remove(looking_for_Any[i]);
+                    }
+
+                    if (howMany == HowManyPlayersInBattleRoyale)
+                    {
+                        GameSessionsAwaiting.Add(new GameSessions(_temporaryBR, GameTypes.PvP_battle_royale));
+                    }
+                    else if (howMany < HowManyPlayersInBattleRoyale && _temporaryBR[0].WhenStarted().AddSeconds(TimeForWaitBeforeAddingBotForBattleRoyale) < DateTime.Now)
+                    {
+                        for (int i = 0; i < (HowManyPlayersInBattleRoyale - howMany); i++)
+                        {
+                            _temporaryBR.Add(GetBotForPvP(GameTypes.PvP_battle_royale));                            
+                        }
+
+                        GameSessionsAwaiting.Add(new GameSessions(_temporaryBR, GameTypes.PvP_battle_royale));
+                    }
+
+                }
+                //=================================
 
 
 
@@ -606,6 +769,23 @@ namespace setup_server
                 Console.WriteLine(ex);
             }
 
+        }
+
+        private static PlayerForGameSession GetBotForPvP(GameTypes _type)
+        {            
+            Random rnd = new Random();
+
+            switch (rnd.Next(1, 3))
+            {
+                case 1:
+                    return new PlayerForGameSession("-1", "warrior bot", "botttt", _type, 0);
+                    break;
+                case 2:
+                    return new PlayerForGameSession("-2", "elem bot", "botttt", _type, 0);
+                    break;
+            }
+
+            return null;
         }
 
         public static async Task SendPing(EndPoint EP, string ID)
