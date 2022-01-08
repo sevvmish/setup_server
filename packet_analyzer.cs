@@ -225,13 +225,12 @@ namespace setup_server
                         return $"3~101~eit";
                     }
 
-                    if (Server.PlayersAwaiting.ContainsKey(char_id[0, 0]) && !Server.PlayersAwaiting[char_id[0, 0]].isPlayerBusyForSession())
+                    if (Server.PlayersAwaiting.ContainsKey(char_id[0, 0]) && Server.PlayersAwaiting[char_id[0, 0]].GetCurrentPlayerStatus() != PlayerStatus.isGone /*!Server.PlayersAwaiting[char_id[0, 0]].isPlayerBusyForSession()*/)
                     {
                         Server.PlayersAwaiting.Remove(char_id[0, 0]);
                         Console.WriteLine(DateTime.Now + $": player {packet_data[3]} removed from any queues, to user from - " + endpoint_address);
                         return $"3~101~out";
                     }
-
 
                 }
 
