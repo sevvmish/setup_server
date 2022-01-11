@@ -19,6 +19,7 @@ namespace setup_server
         {
             try
             {
+                Console.WriteLine(data);
             
                 string[] packet_data = data.Split('~');
                 //Console.WriteLine(data);
@@ -575,6 +576,27 @@ namespace setup_server
                     
                     return;                    
                 }
+
+                //universal ping process
+                if ((packet_data[0] + packet_data[1]) == "071")
+                {
+
+                    if (packet_data[2] != starter.InnerServerConnectionPassword)
+                    {
+                        Console.WriteLine(DateTime.Now + ": error 0~71 in password for another server from " + player_socket.RemoteEndPoint.ToString());
+                        Server.SendDataTCP(player_socket, $"0~71~error");
+                        return;
+                    }
+
+                    string result = $"0~71~{Server.PlayersAwaiting.Count}~{Server.GameSessionsAwaiting.Count}~{Server.GameSessionWaitingForResult.Count}";
+
+                    byte[] t = Encoding.UTF8.GetBytes(result);
+                    encryption.Encode(ref t, starter.secret_key_for_game_servers);
+                    Console.WriteLine(DateTime.Now + $": send Ping Answer {result} to " + player_socket.RemoteEndPoint);
+                    Server.SendDataTCP(player_socket, t);
+                    return;
+                }
+
             }
             catch (Exception ex)
             {

@@ -132,8 +132,21 @@ namespace setup_server
                 if (bytesRead > 0)
                 {                  
                     state.sb.Append(Encoding.UTF8.GetString(state.buffer, 0, bytesRead));
-                    
-                    if (Encoding.UTF8.GetString(state.buffer, 0, 4) == "5~0~")
+
+                    if (Encoding.UTF8.GetString(state.buffer, 0, 4) == "0~71")
+                    {
+                        byte[] d = new byte[bytesRead];
+                        for (int i = 0; i < bytesRead; i++)
+                        {
+                            d[i] = state.buffer[i];
+                        }
+
+                        encryption.Decode(ref d, starter.secret_key_for_game_servers);
+
+                        packet_analyzer.StartSessionTCPInput(Encoding.UTF8.GetString(d), handler);
+
+                    } 
+                    else if (Encoding.UTF8.GetString(state.buffer, 0, 4) == "5~0~")
                     {
 
                         byte[] d = new byte[bytesRead];
@@ -147,7 +160,8 @@ namespace setup_server
                         string res = packet_analyzer.ProcessTCPInput(Encoding.UTF8.GetString(d), handler.RemoteEndPoint.ToString());
 
                         SendDataTCP(handler, $"5~0~{res}");
-                    } else if (!Sessions.ContainsKey(Encoding.UTF8.GetString(state.buffer, 0, 5)))  
+                    } 
+                    else if (!Sessions.ContainsKey(Encoding.UTF8.GetString(state.buffer, 0, 5)))  
                     {
                  
                         packet_analyzer.StartSessionTCPInput(Encoding.UTF8.GetString(state.buffer, 0, bytesRead), handler);                        

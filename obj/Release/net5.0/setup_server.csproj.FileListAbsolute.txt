@@ -18,3 +18,23 @@ D:\NONandroid\setup_server\obj\Release\net5.0\setup_server.pdb
 D:\NONandroid\setup_server\obj\Release\net5.0\setup_server.genruntimeconfig.cache
 D:\NONandroid\setup_server\obj\Release\net5.0\setup_server.csproj.AssemblyReference.cache
 D:\NONandroid\setup_server\obj\Release\net5.0\setup_server.csproj.CopyComplete
+C:\android\non-android projects\setup_server\bin\Release\net5.0\setup_server.exe
+C:\android\non-android projects\setup_server\bin\Release\net5.0\setup_server.deps.json
+C:\android\non-android projects\setup_server\bin\Release\net5.0\setup_server.runtimeconfig.json
+C:\android\non-android projects\setup_server\bin\Release\net5.0\setup_server.runtimeconfig.dev.json
+C:\android\non-android projects\setup_server\bin\Release\net5.0\setup_server.dll
+C:\android\non-android projects\setup_server\bin\Release\net5.0\ref\setup_server.dll
+C:\android\non-android projects\setup_server\bin\Release\net5.0\setup_server.pdb
+C:\android\non-android projects\setup_server\bin\Release\net5.0\MySqlConnector.dll
+C:\android\non-android projects\setup_server\bin\Release\net5.0\NetCoreServer.dll
+C:\android\non-android projects\setup_server\bin\Release\net5.0\BouncyCastle.Crypto.dll
+C:\android\non-android projects\setup_server\obj\Release\net5.0\setup_server.csproj.AssemblyReference.cache
+C:\android\non-android projects\setup_server\obj\Release\net5.0\setup_server.GeneratedMSBuildEditorConfig.editorconfig
+C:\android\non-android projects\setup_server\obj\Release\net5.0\setup_server.AssemblyInfoInputs.cache
+C:\android\non-android projects\setup_server\obj\Release\net5.0\setup_server.AssemblyInfo.cs
+C:\android\non-android projects\setup_server\obj\Release\net5.0\setup_server.csproj.CoreCompileInputs.cache
+C:\android\non-android projects\setup_server\obj\Release\net5.0\setup_server.csproj.CopyComplete
+C:\android\non-android projects\setup_server\obj\Release\net5.0\setup_server.dll
+C:\android\non-android projects\setup_server\obj\Release\net5.0\ref\setup_server.dll
+C:\android\non-android projects\setup_server\obj\Release\net5.0\setup_server.pdb
+C:\android\non-android projects\setup_server\obj\Release\net5.0\setup_server.genruntimeconfig.cache
