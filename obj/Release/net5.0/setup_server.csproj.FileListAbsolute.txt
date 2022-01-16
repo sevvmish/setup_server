@@ -16,7 +16,6 @@ D:\NONandroid\setup_server\obj\Release\net5.0\setup_server.dll
 D:\NONandroid\setup_server\obj\Release\net5.0\ref\setup_server.dll
 D:\NONandroid\setup_server\obj\Release\net5.0\setup_server.pdb
 D:\NONandroid\setup_server\obj\Release\net5.0\setup_server.genruntimeconfig.cache
-D:\NONandroid\setup_server\obj\Release\net5.0\setup_server.csproj.AssemblyReference.cache
 D:\NONandroid\setup_server\obj\Release\net5.0\setup_server.csproj.CopyComplete
 C:\android\non-android projects\setup_server\bin\Release\net5.0\setup_server.exe
 C:\android\non-android projects\setup_server\bin\Release\net5.0\setup_server.deps.json
