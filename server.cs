@@ -49,7 +49,7 @@ namespace setup_server
         private static byte[] buffer_send_tcp = new byte[2048];
 
         //START FOR TCP
-        public static void Server_init_TCP()
+        public static void Server_init_TCP_UDP()
         {
             //start checker for PVP
             //Task.Run(() => check_queue_for_pvp());

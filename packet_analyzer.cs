@@ -24,10 +24,34 @@ namespace setup_server
                 string[] packet_data = data.Split('~');
                 //Console.WriteLine(data);
 
-                //receive data about player any INFO MESSAGES
-                if (packet_data.Length == 4 && (packet_data[0] + packet_data[1]) == "22")
+
+
+                //verify and get client version 2~3~ticket
+                if (packet_data.Length == 3 && (packet_data[0] + packet_data[1]) == "23")
                 {
-                    if (!StringChecker(packet_data[2]) || !StringChecker(packet_data[3]))
+                    if (!StringChecker(packet_data[2]))
+                    {
+                        Console.WriteLine(DateTime.Now + ": send problem 2~3~wds to user from - " + endpoint_address);
+                        return $"2~3~wds"; //wrong digits or signs                    
+                    }
+
+                    string[,] check_ticket = mysql.GetMysqlSelect($"SELECT `user_id` FROM `users` WHERE `ticket_id`='{packet_data[2]}'").Result;
+
+                    if (check_ticket.GetLength(0) == 0 || check_ticket[0, 0] == "error")
+                    {
+                        Console.WriteLine(DateTime.Now + ": send problem 2~3~nst to user from - " + endpoint_address);
+                        return $"2~3~nst";
+                    }
+                                        
+                    return $"2~3~{starter.CLIENT_VERSION}";
+                }
+
+
+
+                //receive data about player any INFO MESSAGES
+                if (packet_data.Length == 3 && (packet_data[0] + packet_data[1]) == "22")
+                {
+                    if (!StringChecker(packet_data[2]))
                     {
                         Console.WriteLine(DateTime.Now + ": send problem 2~2~wds to user from - " + endpoint_address);
                         return $"2~2~wds"; //wrong digits or signs                    
@@ -41,7 +65,7 @@ namespace setup_server
                         return $"2~2~nst";
                     }
 
-                    string[,] result = mysql.GetMysqlSelect($"SELECT `char_info_id`,`information_id` FROM `character_info` WHERE `date_informed`='' AND `character_id`=(SELECT characters.character_id FROM characters WHERE characters.character_name='{packet_data[3]}')").Result;
+                    string[,] result = mysql.GetMysqlSelect($"SELECT `char_info_id`,`information_id` FROM `character_info` WHERE `date_informed`='' AND `user_id`='{check_ticket[0,0]}'").Result;
 
                     if (result.GetLength(0) == 0 || result[0, 0] == "error")
                     {

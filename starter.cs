@@ -12,6 +12,7 @@ namespace setup_server
         public const int passlog_max_lenth = 16;
         public const int charname_min_lenth = 6;
         public const int charname_max_lenth = 16;
+        public const string CLIENT_VERSION = "1.0";
 
         public static byte[] secret_key_for_game_servers;
         public static string InnerServerConnectionPassword;
@@ -27,12 +28,13 @@ namespace setup_server
 
         static void Main(string[] args)
         {
-            stopWatch.Start();
+            //stopWatch.Start();
             data_config.Init_data_config();
             
             Thread.Sleep(2000);
 
-            Server.Server_init_TCP();
+            //Task.Run(() => sendPing());
+            Server.Server_init_TCP_UDP();
             Console.ReadKey();
         }
 
@@ -40,7 +42,7 @@ namespace setup_server
         static async void sendPing()
         {
             await Task.Delay(2000);
-            Console.WriteLine(Server.SendAndGetTCP_between_servers($"0~71~{InnerServerConnectionPassword}", 2323, "192.168.168.70", true) );
+            Console.WriteLine(Server.SendAndGetTCP_between_servers($"0~71~{InnerServerConnectionPassword}", 2326, "31.172.66.150", true) );
         }
 
 

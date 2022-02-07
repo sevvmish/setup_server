@@ -41,7 +41,8 @@ namespace setup_server
                 {
                     CurrentPlayers[i].ResetPlayerStatusToNonBusy();                    
                 }
-                
+
+                Console.WriteLine("game session removed - error creating session");
                 Server.GameSessionsAwaiting.Remove(this);
             }
 
@@ -98,6 +99,7 @@ namespace setup_server
                 }
             }
 
+            Console.WriteLine("game session removed ");
             Server.GameSessionsAwaiting.Remove(this);
         }
 
