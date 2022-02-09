@@ -70,7 +70,7 @@ namespace setup_server
                     if (result.GetLength(0) == 0 || result[0, 0] == "error")
                     {
                         Console.WriteLine(DateTime.Now + ": send problem 2~2~nsc to user from - " + endpoint_address);
-                        return $"2~2~nsc";
+                        return $"2~2~no";
                     }
 
                     string char_info_id = result[0, 0];
