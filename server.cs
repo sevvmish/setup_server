@@ -34,6 +34,7 @@ namespace setup_server
         public const int HowManyPlayersInBattleRoyale = 8;
 
         //gamehubs cheking
+        private static List<int> existingRegionServers = new List<int>();
 
         //UDP     
         private const int port_udp_for_GameHubs = 2325;    
@@ -48,20 +49,71 @@ namespace setup_server
         private const int max_connections = 100000;      
         private static byte[] buffer_send_tcp = new byte[2048];
 
-        //START FOR TCP
-        public static void Server_init_TCP_UDP()
+        public static async void AddCheCkQueueTimer(int delay, int region)
         {
-            //start checker for PVP
-            //Task.Run(() => check_queue_for_pvp());
+            await Task.Delay(delay);
 
             _timer = new System.Timers.Timer(2000);
 
             _timer.Elapsed += delegate {
-                check_queue_for_pvp();
+                check_queue_for_pvp(region);
             };
 
             _timer.AutoReset = true;
             _timer.Enabled = true;
+        }
+
+        //START FOR TCP
+        public static void Server_init_TCP_UDP()
+        {
+            //get right region===========================
+            List<int> existingRegionServers = new List<int>();
+            foreach (string keys in starter.GameServerHUBs.Keys)
+            {
+                if (!existingRegionServers.Contains(starter.GameServerHUBs[keys].ServerLocation))
+                {
+                    existingRegionServers.Add(starter.GameServerHUBs[keys].ServerLocation);
+                }
+            }
+
+            if (existingRegionServers.Count <= 1)
+            {
+                AddCheCkQueueTimer(1, 999);
+            }
+            else
+            {
+                int _delay = 0;
+                foreach (int item in existingRegionServers)
+                {
+                    AddCheCkQueueTimer(_delay, item);
+                    _delay += 500;
+                }
+            }
+            //===========================================
+
+
+            /*
+            if (regions.Count<=1)
+            {
+                AddCheCkQueueTimer(1, 999);
+            }
+            else if(regions.Count > 1 && regions.Count < starter.MAX_GAME_HUBS)
+            {
+                
+            }
+            else if (regions.Count == starter.MAX_GAME_HUBS)
+            {
+                int _delay = 0;
+                for (int i = 0; i < starter.MAX_GAME_HUBS; i++)
+                {
+                    AddCheCkQueueTimer(_delay, i);
+                    _delay += 500;
+                }
+            }
+            */
+            //===========================================
+
+
 
             Task.Run(() =>
             {
@@ -402,15 +454,14 @@ namespace setup_server
 
         
 
-        public static void check_queue_for_pvp()
+        public static void check_queue_for_pvp(int region_id)
         {
                       
             try
             {
                         
                 if (GameSessionsAwaiting.Count > 0)
-                {
-                            
+                {                            
                     foreach (GameSessions item in GameSessionsAwaiting)
                     {
                        
@@ -421,11 +472,8 @@ namespace setup_server
                             GameSessionsAwaiting.Remove(item);
                         }
                     }
-                    //===============================================================================
-
-                    
+                    //===============================================================================                    
                 }
-
           
                 List<PlayerForGameSession> looking_for_2 = new List<PlayerForGameSession>(2);
                 List<PlayerForGameSession> looking_for_4 = new List<PlayerForGameSession>(4);
@@ -434,6 +482,24 @@ namespace setup_server
 
                 foreach (string keys in PlayersAwaiting.Keys)
                 {
+                    //filter for region game===============================
+                    if (region_id != 999)
+                    {
+                        if (PlayersAwaiting[keys].ServerLocation != region_id && existingRegionServers.Contains(PlayersAwaiting[keys].ServerLocation))
+                        {
+                            continue;
+                        }
+                        else if((region_id == 0 || region_id == 3) && PlayersAwaiting[keys].ServerLocation == 2 && !existingRegionServers.Contains(2))
+                        {
+                            continue;
+                        }
+                        else if((region_id == 0 || region_id == 2) && PlayersAwaiting[keys].ServerLocation == 3 && !existingRegionServers.Contains(3))
+                        {
+                            continue;
+                        }
+                    }
+                    //======================================================
+
                     //cleaning for old unupdated============================
                     if (PlayersAwaiting[keys].WhenLastUpdated().AddSeconds(LimitForIdlePlayerToLoseQueue) < DateTime.Now && PlayersAwaiting[keys].GetCurrentPlayerStatus()!=PlayerStatus.isGone) 
                     {
@@ -467,9 +533,7 @@ namespace setup_server
                                 looking_for_Any.Add(PlayersAwaiting[keys]);
                                 break;
                         }
-
                     }
-
                 }
 
                 //Console.WriteLine(looking_for_2.Count + " - 1vs1..." + looking_for_4.Count + " - 2vs2..." + looking_for_BR.Count + " - BR...."  + looking_for_Any.Count + " - Any...");
@@ -482,25 +546,23 @@ namespace setup_server
                     {
                         for (int i = 0; i < _count; i += 2)
                         {                            
-                            GameSessionsAwaiting.Add(new GameSessions(new List<PlayerForGameSession> { looking_for_2[i], looking_for_2[i+1] }, GameTypes.PvP_1vs1));
-                            //looking_for_2.Remove(looking_for_2[0]);
-                            //looking_for_2.Remove(looking_for_2[1]);
+                            GameSessionsAwaiting.Add(new GameSessions(new List<PlayerForGameSession> { looking_for_2[i], looking_for_2[i+1] }, GameTypes.PvP_1vs1, region_id));
+                          
                         }
                     }
                         
                 } 
                 else if (looking_for_2.Count == 1 && looking_for_Any.Count>0)
                 {                    
-                    GameSessionsAwaiting.Add(new GameSessions(new List<PlayerForGameSession> { looking_for_2[0], looking_for_Any[0] }, GameTypes.PvP_1vs1));
-                    //looking_for_2.Remove(looking_for_2[0]);
-                    //looking_for_Any.Remove(looking_for_Any[0]);
+                    GameSessionsAwaiting.Add(new GameSessions(new List<PlayerForGameSession> { looking_for_2[0], looking_for_Any[0] }, GameTypes.PvP_1vs1, region_id));
+                
                 }
                 else if (looking_for_2.Count == 1 && looking_for_Any.Count == 0)
                 {
                     if (looking_for_2[0].WhenStarted().AddSeconds(TimeForWaitBeforeAddingBot1vs1) < DateTime.Now)
                     {
-                        GameSessionsAwaiting.Add(new GameSessions(new List<PlayerForGameSession> { looking_for_2[0], GetBotForPvP(GameTypes.PvP_1vs1) }, GameTypes.PvP_1vs1));
-                        //looking_for_2.Remove(looking_for_2[0]);                        
+                        GameSessionsAwaiting.Add(new GameSessions(new List<PlayerForGameSession> { looking_for_2[0], GetBotForPvP(GameTypes.PvP_1vs1) }, GameTypes.PvP_1vs1, region_id));
+                        
                     }
                 }
                 //================================================================
@@ -513,11 +575,8 @@ namespace setup_server
                     {
                         for (int i = 0; i < _count; i+=4)
                         {
-                            GameSessionsAwaiting.Add(new GameSessions(new List<PlayerForGameSession> { looking_for_4[i], looking_for_4[i+1], looking_for_4[i+2], looking_for_4[i+3] }, GameTypes.PvP_2vs2));
-                            //looking_for_4.Remove(looking_for_4[0]);
-                            //looking_for_4.Remove(looking_for_4[1]);
-                            //looking_for_4.Remove(looking_for_4[2]);
-                            //looking_for_4.Remove(looking_for_4[3]);
+                            GameSessionsAwaiting.Add(new GameSessions(new List<PlayerForGameSession> { looking_for_4[i], looking_for_4[i+1], looking_for_4[i+2], looking_for_4[i+3] }, GameTypes.PvP_2vs2, region_id));
+                           
                         }
                     }
 
@@ -532,7 +591,7 @@ namespace setup_server
                         howMany++;
                         _temporary2vs2.Add(looking_for_4[i]);
                         Console.WriteLine("added : " + looking_for_4[i].GetCharacterName());
-                        //looking_for_4.Remove(looking_for_4[i]);
+                       
                     }
 
                     int delta = looking_for_Any.Count > (4 - howMany) ? (4 - howMany) : looking_for_Any.Count;
@@ -541,12 +600,12 @@ namespace setup_server
                     {
                         howMany++;
                         _temporary2vs2.Add(looking_for_Any[i]);
-                        //looking_for_Any.Remove(looking_for_Any[i]);
+                        
                     }
 
                     if (howMany == 4)
                     {
-                        GameSessionsAwaiting.Add(new GameSessions(_temporary2vs2, GameTypes.PvP_2vs2));
+                        GameSessionsAwaiting.Add(new GameSessions(_temporary2vs2, GameTypes.PvP_2vs2, region_id));
                     } 
                     else if (howMany < 4 && _temporary2vs2[0].WhenStarted().AddSeconds(TimeForWaitBeforeAddingBotFor2vs2) < DateTime.Now)
                     {
@@ -556,7 +615,7 @@ namespace setup_server
                             
                         }
 
-                        GameSessionsAwaiting.Add(new GameSessions(_temporary2vs2, GameTypes.PvP_2vs2));
+                        GameSessionsAwaiting.Add(new GameSessions(_temporary2vs2, GameTypes.PvP_2vs2, region_id));
                     }                   
                 }
                 //==================================================================================================
@@ -573,9 +632,9 @@ namespace setup_server
                             for (int u = 0; u < HowManyPlayersInBattleRoyale; u++)
                             {
                                 _temporaryBR.Add(looking_for_BR[i+u]);
-                                //looking_for_BR.Remove(looking_for_BR[u]);
+                                
                             }
-                            GameSessionsAwaiting.Add(new GameSessions(_temporaryBR, GameTypes.PvP_battle_royale));
+                            GameSessionsAwaiting.Add(new GameSessions(_temporaryBR, GameTypes.PvP_battle_royale, region_id));
                          
                         }
                     }
@@ -590,7 +649,7 @@ namespace setup_server
                     {
                         howMany++;
                         _temporaryBR.Add(looking_for_BR[i]);
-                        //looking_for_BR.Remove(looking_for_BR[i]);
+                        
                     }
 
                     int delta = looking_for_Any.Count > (HowManyPlayersInBattleRoyale - howMany) ? (HowManyPlayersInBattleRoyale - howMany) : looking_for_Any.Count;
@@ -599,12 +658,12 @@ namespace setup_server
                     {
                         howMany++;
                         _temporaryBR.Add(looking_for_Any[i]);
-                        //looking_for_Any.Remove(looking_for_Any[i]);
+                        
                     }
 
                     if (howMany == HowManyPlayersInBattleRoyale)
                     {
-                        GameSessionsAwaiting.Add(new GameSessions(_temporaryBR, GameTypes.PvP_battle_royale));
+                        GameSessionsAwaiting.Add(new GameSessions(_temporaryBR, GameTypes.PvP_battle_royale, region_id));
                     }
                     else if (howMany < HowManyPlayersInBattleRoyale && _temporaryBR[0].WhenStarted().AddSeconds(TimeForWaitBeforeAddingBotForBattleRoyale) < DateTime.Now)
                     {
@@ -613,7 +672,7 @@ namespace setup_server
                             _temporaryBR.Add(GetBotForPvP(GameTypes.PvP_battle_royale));                            
                         }
 
-                        GameSessionsAwaiting.Add(new GameSessions(_temporaryBR, GameTypes.PvP_battle_royale));
+                        GameSessionsAwaiting.Add(new GameSessions(_temporaryBR, GameTypes.PvP_battle_royale, region_id));
                     }
 
                 }
@@ -636,10 +695,10 @@ namespace setup_server
             switch (rnd.Next(1, 3))
             {
                 case 1:
-                    return new PlayerForGameSession("-1", "warrior bot", "botttt", _type, 0);
+                    return new PlayerForGameSession("-1", "warrior bot", "botttt", _type, 0, 0);
                     break;
                 case 2:
-                    return new PlayerForGameSession("-2", "elem bot", "botttt", _type, 0);
+                    return new PlayerForGameSession("-2", "elem bot", "botttt", _type, 0, 0);
                     break;
             }
 
@@ -668,52 +727,67 @@ namespace setup_server
             }
         }
 
-        public static async Task<string> CheckAndGetGameHubs()
+        public static async Task<string> CheckAndGetGameHubs(int region_id)
         {
-            foreach (string keys in starter.GameServerHUBs.Keys)
+            Dictionary<string, GameHubsSpec> currentHubs = new Dictionary<string, GameHubsSpec>();
+            if (region_id==999)
             {
-               
+                currentHubs = starter.GameServerHUBs;
+            }
+            else
+            {
+                foreach (string keys in starter.GameServerHUBs.Keys)
+                {
+                    if (starter.GameServerHUBs[keys].ServerLocation==region_id)
+                    {
+                        currentHubs.Add(keys, starter.GameServerHUBs[keys]);
+                    }
+                }
+            }
+
+
+            foreach (string keys in currentHubs.Keys)
+            {               
                 try
                 {
                     string ID = functions.get_random_set_of_symb(6);
 
-                    await SendPing(IPEndPoint.Parse($"{starter.GameServerHUBs[keys].GetIP()}:{port_udp_for_GameHubs}"), ID);
+                    await SendPing(IPEndPoint.Parse($"{currentHubs[keys].GetIP()}:{port_udp_for_GameHubs}"), ID);
                     await Task.Delay(1000);
 
                     if (SendPingsList.ContainsKey(ID) && SendPingsList[ID].isItOK())
                     {
-                        
-                        starter.GameServerHUBs[keys].SetActive();
-                        starter.GameServerHUBs[keys].SetPing(SendPingsList[ID].GetPing());
-                        starter.GameServerHUBs[keys].SetSessions(SendPingsList[ID].GetSessions());
+
+                        currentHubs[keys].SetActive();
+                        currentHubs[keys].SetPing(SendPingsList[ID].GetPing());
+                        currentHubs[keys].SetSessions(SendPingsList[ID].GetSessions());
                         SendPingsList.Remove(ID);
                     } 
                     else
                     {
                         
-                        Console.WriteLine(DateTime.Now + ": server is inactive - no ping - " + starter.GameServerHUBs[keys].GetIP());
-                        starter.GameServerHUBs[keys].SetnonActive();
+                        Console.WriteLine(DateTime.Now + ": server is inactive - no ping - " + currentHubs[keys].GetIP());
+                        currentHubs[keys].SetnonActive();
                         
                     }
 
                   
-                    Console.WriteLine(starter.GameServerHUBs[keys].GetActiveState() + " - " + starter.GameServerHUBs[keys].GetIP() + " - " + starter.GameServerHUBs[keys].GetPing());
+                    Console.WriteLine(currentHubs[keys].GetActiveState() + " - " + currentHubs[keys].GetIP() + " - " + currentHubs[keys].GetPing());
 
                 }
                 catch (Exception ex)
                 {
-                    starter.GameServerHUBs[keys].SetnonActive();
-                    Console.WriteLine(DateTime.Now + ": server is inactive - no ping - " + starter.GameServerHUBs[keys].GetIP());
+                    currentHubs[keys].SetnonActive();
+                    Console.WriteLine(DateTime.Now + ": server is inactive - no ping - " + currentHubs[keys].GetIP());
                 }
             }
 
-            foreach (string keys in starter.GameServerHUBs.Keys)
+            foreach (string keys in currentHubs.Keys)
             {
-                if (starter.GameServerHUBs[keys].GetActiveState())
+                if (currentHubs[keys].GetActiveState())
                 {
                     return starter.GameServerHUBs[keys].GetIP();
                 }
-
             }
 
             return "error";
@@ -725,10 +799,6 @@ namespace setup_server
 
             if (SendPingsList.ContainsKey(ID)) SendPingsList.Remove(ID);
         }
-
-      
-        
-
     }
 
    
@@ -738,13 +808,34 @@ namespace setup_server
         private bool isActive;
         private List<long> ping;
         private int number_of_sessions;
+        private int serverLocation;
 
-        public GameHubsSpec(string _ip)
+        //EUROPE 0
+        //USA 1
+        //Asia 2
+        //SA 3
+
+        public int ServerLocation
+        {
+            get
+            {
+                return serverLocation;
+            }
+
+            set
+            {
+                serverLocation = value;
+            }
+        }
+
+
+        public GameHubsSpec(string _ip, int server)
         {
             hub_IP = _ip;
             isActive = true;
             ping = new List<long>();
             number_of_sessions = 0;
+            serverLocation = server;
         }
 
         public void SetnonActive()

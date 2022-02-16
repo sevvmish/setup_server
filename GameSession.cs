@@ -12,9 +12,11 @@ namespace setup_server
         private List<PlayerForGameSession> CurrentPlayers = new List<PlayerForGameSession>();
         private DateTime WhenCheckWasOK;
         private PlayerStatus SessionStatus;
+        private int region_id;
         
-        public GameSessions(List<PlayerForGameSession> _current_players, GameTypes _gameType)
+        public GameSessions(List<PlayerForGameSession> _current_players, GameTypes _gameType, int _region)
         {
+            region_id = _region;
            
             for (int i = 0; i < _current_players.Count; i++)
             {
@@ -167,7 +169,7 @@ namespace setup_server
 
                 //get hub_ip for game:
                 
-                string Game_hub_IP = await Server.CheckAndGetGameHubs();
+                string Game_hub_IP = await Server.CheckAndGetGameHubs(region_id);
                 Console.WriteLine(DateTime.Now + ": server chosen - " + Game_hub_IP);
                 if (Game_hub_IP=="error")
                 {
@@ -425,6 +427,7 @@ namespace setup_server
         private string GameHub = "0";
         private int Score;
         private bool isRaitingReassessed;
+        private int serverLocation;
 
         public bool RaitingReassessing
         {
@@ -444,7 +447,7 @@ namespace setup_server
         private int PlayerPVPRaiting;
         private bool isBusyForSession;
 
-        public PlayerForGameSession(string _char_ID, string _char_name, string _char_ticket, GameTypes _player_game_type, int _pvp_rait)
+        public PlayerForGameSession(string _char_ID, string _char_name, string _char_ticket, GameTypes _player_game_type, int _pvp_rait, int player_server_region)
         {
             Character_ID = _char_ID;
           
@@ -457,6 +460,7 @@ namespace setup_server
             WhenLastUpdateSignal = DateTime.Now;
             CurrentPlayerStatus = PlayerStatus.free;
             WhenPassedCheckOK = DateTime.Now;
+            serverLocation = player_server_region;
         }
 
         public int ManageScore
@@ -472,6 +476,20 @@ namespace setup_server
             }
 
         }
+
+        public int ServerLocation
+        {
+            get
+            {
+                return serverLocation;
+            }
+
+            set
+            {
+                serverLocation = value;
+            }
+        }
+
 
         public DateTime GetTimeOfPassCheckOK()
         {

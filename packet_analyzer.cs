@@ -171,6 +171,16 @@ namespace setup_server
                         return $"3~1~eit";
                     }
 
+                    //get server location
+                    int region_id = 0;
+                    string[,] server_number = mysql.GetMysqlSelect($"SELECT `region_id` FROM `users` WHERE `ticket_id`='{packet_data[2]}'").Result;
+                    if (server_number.GetLength(0) != 1 || server_number[0,0]=="error")
+                    {
+                        Console.WriteLine(DateTime.Now + ": error getting region_ID form - " + endpoint_address);                        
+                    }
+                    region_id = int.Parse(server_number[0, 0]);
+
+
                     string[,] char_id = mysql.GetMysqlSelect($"SELECT characters.character_id FROM characters WHERE characters.character_name='{packet_data[3]}'").Result;
                     if (char_id.GetLength(0) == 0)
                     {
@@ -219,7 +229,7 @@ namespace setup_server
                         if (PVPraiting[0, 0] == "error") PVPraiting[0, 0] = "0";
                         
                         //INIT
-                        Server.PlayersAwaiting.Add(char_id[0, 0], new PlayerForGameSession(char_id[0, 0], packet_data[3], packet_data[2], WhatPVP, int.Parse(PVPraiting[0, 0])));
+                        Server.PlayersAwaiting.Add(char_id[0, 0], new PlayerForGameSession(char_id[0, 0], packet_data[3], packet_data[2], WhatPVP, int.Parse(PVPraiting[0, 0]), region_id));
                         return $"3~1~ok";
                     }
                                
