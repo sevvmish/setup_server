@@ -782,15 +782,25 @@ namespace setup_server
                 }
             }
 
+            int sessions = 100000;
+            string IP = null;
             foreach (string keys in currentHubs.Keys)
             {
-                if (currentHubs[keys].GetActiveState())
+                if (currentHubs[keys].GetActiveState() && currentHubs[keys].GetSessions()<sessions)
                 {
-                    return starter.GameServerHUBs[keys].GetIP();
+                    IP = currentHubs[keys].GetIP();
+                    sessions = currentHubs[keys].GetSessions();
                 }
             }
 
-            return "error";
+            if (!string.IsNullOrEmpty(IP))
+            {
+                return IP;
+            }
+            else
+            {
+                return "error";
+            }            
         }
 
         public static async void KillSendPingKey(string ID)
@@ -851,6 +861,11 @@ namespace setup_server
         public void SetSessions(int _sessions)
         {
             number_of_sessions = _sessions;
+        }
+
+        public int GetSessions()
+        {
+            return number_of_sessions;
         }
 
         public void SetPing(long _ping)
