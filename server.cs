@@ -16,11 +16,13 @@ namespace setup_server
         public static Dictionary<string, PingProcessor> SendPingsList = new Dictionary<string, PingProcessor>();
         public static Dictionary<string, long> ReceivedPingList = new Dictionary<string, long>();
         public static Dictionary<string, byte[]> Sessions = new Dictionary<string, byte[]>();
-        public static Dictionary<string, DateTime> pvp1vs1 = new Dictionary<string, DateTime>();
-     
+        
+        public static Dictionary<string, VisitorData> CurrentVisitors = new Dictionary<string, VisitorData>();
+        public static Dictionary<string, string> FindCharacterNameByTicket = new Dictionary<string, string>();
+
         public static Dictionary<string, PlayerForGameSession> PlayersAwaiting = new Dictionary<string, PlayerForGameSession>();
 
-        public static System.Timers.Timer _timer;
+        private static System.Timers.Timer queueTimer, visitorsTimer;
 
         public static HashSet<GameSessions> GameSessionsAwaiting = new HashSet<GameSessions>();
         public static Dictionary<string, GameSessionResults> GameSessionWaitingForResult = new Dictionary<string, GameSessionResults>();
@@ -32,12 +34,14 @@ namespace setup_server
         public const float TimeForWaitBeforeAddingBotForBattleRoyale = 20f;        
         public const float TimeForMakingIsChekedToREADY = 10f;
         public const int HowManyPlayersInBattleRoyale = 8;
+        public const float TimeForDeleteInactiveVisitor = 3f;
 
         //gamehubs cheking
         private static List<int> existingRegionServers = new List<int>();
 
         //UDP     
-        private const int port_udp_for_GameHubs = 2325;    
+        public const int port_udp_for_GameHubs = 2325;
+        public const int port_udp_for_SETUP = 2327;
         public static UDPServerConnector ServerUDP;
 
         //TCP        
@@ -49,19 +53,7 @@ namespace setup_server
         private const int max_connections = 100000;      
         private static byte[] buffer_send_tcp = new byte[2048];
 
-        public static async void AddCheCkQueueTimer(int delay, int region)
-        {
-            await Task.Delay(delay);
-
-            _timer = new System.Timers.Timer(2000);
-
-            _timer.Elapsed += delegate {
-                check_queue_for_pvp(region);
-            };
-
-            _timer.AutoReset = true;
-            _timer.Enabled = true;
-        }
+        
 
         //START FOR TCP
         public static void Server_init_TCP_UDP()
@@ -91,33 +83,20 @@ namespace setup_server
             }
             //===========================================
 
+            //==============timer for visitors
+            visitorsTimer = new System.Timers.Timer(1000);
 
-            /*
-            if (regions.Count<=1)
-            {
-                AddCheCkQueueTimer(1, 999);
-            }
-            else if(regions.Count > 1 && regions.Count < starter.MAX_GAME_HUBS)
-            {
-                
-            }
-            else if (regions.Count == starter.MAX_GAME_HUBS)
-            {
-                int _delay = 0;
-                for (int i = 0; i < starter.MAX_GAME_HUBS; i++)
-                {
-                    AddCheCkQueueTimer(_delay, i);
-                    _delay += 500;
-                }
-            }
-            */
-            //===========================================
+            visitorsTimer.Elapsed += delegate {
+                checkVisitorsActiveStatus();
+            };
 
-
+            visitorsTimer.AutoReset = true;
+            visitorsTimer.Enabled = true;
+            //=================================
 
             Task.Run(() =>
             {
-                ServerUDP = new UDPServerConnector(IPAddress.Any, 2327);
+                ServerUDP = new UDPServerConnector(IPAddress.Any, port_udp_for_SETUP);
                 ServerUDP.Start();
 
             });
@@ -452,7 +431,34 @@ namespace setup_server
             return Task.CompletedTask;
         }
 
-        
+
+        public static void checkVisitorsActiveStatus()
+        {
+            foreach (string key in CurrentVisitors.Keys)
+            {
+                if (CurrentVisitors[key].GetLastUpdate.AddSeconds(TimeForDeleteInactiveVisitor)<DateTime.Now)
+                {
+                    CurrentVisitors.Remove(key);
+                }
+            }
+        }
+
+
+        public static async void AddCheCkQueueTimer(int delay, int region)
+        {
+            await Task.Delay(delay);
+
+            queueTimer = new System.Timers.Timer(2000);
+
+            queueTimer.Elapsed += delegate {
+                check_queue_for_pvp(region);
+            };
+
+            queueTimer.AutoReset = true;
+            queueTimer.Enabled = true;            
+        }
+
+
 
         public static void check_queue_for_pvp(int region_id)
         {
@@ -992,18 +998,16 @@ namespace setup_server
             {
 
                 // Important: Receive using thread pool is necessary here to avoid stack overflow with Socket.ReceiveFromAsync() method!
-                ThreadPool.QueueUserWorkItem(o => { ReceiveAsync(); });
+                //ThreadPool.QueueUserWorkItem(o => { ReceiveAsync(); });
 
             }
             else
             {
-
-                //List<byte> b = new List<byte>();
+                                
                 byte[] t = new byte[(int)size];
 
                 for (int i = 0; i < (int)size; i++)
-                {
-                    //b.Add(buffer[i]);
+                {                    
                     t[i] = buffer[i];
                 }
 
@@ -1011,7 +1015,7 @@ namespace setup_server
                     
                 string data_result = Encoding.UTF8.GetString(t, 0, t.Length);
 
-                Console.WriteLine("received " + data_result);
+                //Console.WriteLine("received " + data_result);
 
                 try
                 {
@@ -1036,6 +1040,27 @@ namespace setup_server
                             
                         }
                     }
+
+                    string packet_key = Encoding.UTF8.GetString(t, 0, 5);
+                    
+                    if (Server.Sessions.ContainsKey(packet_key)) 
+                    {                        
+                        encryption.Decode(ref t, Server.Sessions[packet_key]);
+                        string res = Encoding.UTF8.GetString(t, 0, t.Length);                        
+                        string[] packet = res.Split('~');                        
+
+                        if (packet[1]=="6" && packet[2]=="0" && Server.CurrentVisitors.ContainsKey(packet[3]) && Server.CurrentVisitors[packet[3]].GetCharacter== packet[4])
+                        {
+                            Server.CurrentVisitors[packet[3]].Update();                            
+                            Server.CurrentVisitors[packet[3]].SetAddress(endpoint);                            
+                        }
+                    }
+
+
+
+                    
+                    
+
                 }
                 catch (Exception ex)
                 {
@@ -1043,20 +1068,8 @@ namespace setup_server
                 }
             }
 
-            //ThreadPool.QueueUserWorkItem(o => { ReceiveAsync(); });
+            ReceiveAsync();
 
-
-            try
-            {
-                ReceiveAsync();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Onreceived - " + ex);
-            }
-
-            // Echo the message back to the sender
-            //SendAsync(endpoint, buffer, offset, size);
         }
 
 
@@ -1064,6 +1077,67 @@ namespace setup_server
         {
             Console.WriteLine($"Server caught an error with code {error} ");
 
+        }
+    }
+
+
+    public class VisitorData
+    {
+        private string characterName;
+        private string ticket;
+        private DateTime lastUpdate;
+        private EndPoint address;
+
+        public VisitorData(string name, string id, EndPoint _address)
+        {
+            Console.WriteLine(DateTime.Now +  ": added new visitor " + name + " with ticket " + id);
+            characterName = name;
+            ticket = id;
+            lastUpdate = DateTime.Now;
+            address = _address;
+        }
+
+        public EndPoint Address
+        {
+            get
+            {
+                return address;
+            }
+
+        }
+
+        public void SetAddress(EndPoint _address)
+        {
+            address = _address;
+        }
+
+        public string GetCharacter
+        {
+            get
+            {
+                return characterName;
+            }
+        }
+
+        public string GetTicket
+        {
+            get
+            {
+                return ticket;
+            }
+        }
+
+        public DateTime GetLastUpdate
+        {
+            get
+            {
+                return lastUpdate;
+            }
+        }
+
+        public void Update()
+        {
+            lastUpdate = DateTime.Now;
         }
 
     }

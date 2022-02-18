@@ -337,7 +337,33 @@ namespace setup_server
         }
 
 
+        public static void AddOrUpdateVisitors(string ticket, string name)
+        {
 
+            //add or refresh data about visitor========
+
+            if (!Server.FindCharacterNameByTicket.ContainsKey(name))
+            {
+                Server.FindCharacterNameByTicket.Add(name, ticket);
+            }
+            else
+            {
+                Server.FindCharacterNameByTicket[name] = ticket;
+            }
+
+
+
+            if (!Server.CurrentVisitors.ContainsKey(ticket))
+            {
+
+                Server.CurrentVisitors.Add(ticket, new VisitorData(name, ticket, null));
+            }
+            else
+            {
+                Server.CurrentVisitors[ticket].Update();
+            }
+            //========================================
+        }
 
     }
 }

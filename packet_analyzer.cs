@@ -136,11 +136,15 @@ namespace setup_server
 
                     string[,] get_char_data = mysql.GetMysqlSelect($"SELECT `speed`, `health`, `health_regen`, `energy_regen`, `weapon_attack`, `hit_power`, `armor`, `shield_block`, `magic_resistance`, `dodge`, `cast_speed`, `melee_crit`, `magic_crit`, `spell_power`, `spell1`, `spell2`, `spell3`, `spell4`, `spell5`, `spell6`, `spell_book`, `talents` FROM `character_property` WHERE character_property.character_id = (SELECT characters.character_id FROM characters WHERE characters.character_name = '{packet_data[3]}')  AND((SELECT users.user_id FROM users WHERE users.ticket_id = '{packet_data[2]}') = (SELECT characters.user_id FROM characters WHERE characters.character_name = '{packet_data[3]}')) ").Result;
 
-                    if (get_char_data.GetLength(0)==0)
+                    if (get_char_data.GetLength(0)==0 || get_char_data[0,0]=="error")
                     {
                         Console.WriteLine(DateTime.Now + ": send problem 2~0~nd to user from - " + endpoint_address);
                         return $"2~0~nd";
                     }
+
+                    //data about visitors==============
+                    functions.AddOrUpdateVisitors(packet_data[2], packet_data[3]);
+                    //================================
 
                     string result = "";
 
@@ -259,6 +263,10 @@ namespace setup_server
                         Console.WriteLine(DateTime.Now + ": send problem 3~101~eit to user from - " + endpoint_address);
                         return $"3~101~eit";
                     }
+
+                    //remove visitor
+                    Server.CurrentVisitors.Remove(packet_data[2]);
+                    //=================
 
                     if (Server.PlayersAwaiting.ContainsKey(char_id[0, 0]) && Server.PlayersAwaiting[char_id[0, 0]].GetCurrentPlayerStatus() != PlayerStatus.isGone /*!Server.PlayersAwaiting[char_id[0, 0]].isPlayerBusyForSession()*/)
                     {

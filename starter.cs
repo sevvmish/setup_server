@@ -18,7 +18,7 @@ namespace setup_server
         public static byte[] secret_key_for_game_servers;
         public static string InnerServerConnectionPassword;
         public static string MysqlConnectionData_login;
-        public static string address_for_data_config = @"/home/admin/data"; //@"C:\android\data"  @"/home/admin/data"
+        public static string address_for_data_config = @"C:\android\data"; //@"C:\android\data"  @"/home/admin/data"
 
         public static Stopwatch stopWatch = new Stopwatch();
 
@@ -46,18 +46,6 @@ namespace setup_server
             Console.WriteLine(Server.SendAndGetTCP_between_servers($"0~71~{InnerServerConnectionPassword}", 2326, "31.172.66.150", true) );
         }
 
-
-        static async void er()
-        {
-            while (1 == 1)
-            {
-                await Task.Delay(2000);
-                Console.WriteLine("waiting sessions: " + Server.GameSessionsAwaiting.Count);
-                Console.WriteLine("waiting result sessions: " + Server.GameSessionWaitingForResult.Count);
-                Console.WriteLine("waiting pvvp1v1: " + Server.pvp1vs1.Count + "    send ping-" + Server.SendPingsList.Count + "    receive pi-" + Server.ReceivedPingList.Count  + "    player awaiting: " + Server.PlayersAwaiting.Count);
-                Console.WriteLine("===================================================");
-            }
-
-        }
+                
     }
 }
