@@ -18,12 +18,12 @@ namespace setup_server
         public static byte[] secret_key_for_game_servers;
         public static string InnerServerConnectionPassword;
         public static string MysqlConnectionData_login;
-        public static string address_for_data_config = @"C:\android\data"; //@"C:\android\data"  @"/home/admin/data"
+        public static string address_for_data_config = @"/home/admin/data"; //@"C:\android\data"  @"/home/admin/data"
 
         public static Stopwatch stopWatch = new Stopwatch();
 
         //game servers
-        public static int GameServerPort = 2323;       
+        public static int GameServerPort = 2328;       
         public static Dictionary<string, GameHubsSpec> GameServerHUBs = new Dictionary<string, GameHubsSpec>();
         
 
