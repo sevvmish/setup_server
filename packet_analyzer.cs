@@ -24,7 +24,27 @@ namespace setup_server
                 string[] packet_data = data.Split('~');
                 //Console.WriteLine(data);
 
+                /*
+                //get current friend list  7~1~ticket~char
+                if (packet_data.Length == 4 && (packet_data[0] + packet_data[1]) == "71")
+                {
+                    if (!StringChecker(packet_data[2]) || !StringChecker(packet_data[3]))
+                    {
+                        Console.WriteLine(DateTime.Now + ": send problem 7~1~wds to user from - " + endpoint_address);
+                        return $"7~1~wds"; //wrong digits or signs                    
+                    }
 
+                    string[,] check_ticket = mysql.GetMysqlSelect($"SELECT `user_id` FROM `users` WHERE `ticket_id`='{packet_data[2]}'").Result;
+
+                    if (check_ticket.GetLength(0) == 0 || check_ticket[0, 0] == "error")
+                    {
+                        Console.WriteLine(DateTime.Now + ": send problem 7~1~nst to user from - " + endpoint_address);
+                        return $"7~1~nst";
+                    }
+
+                    kjdfsgkjdfhg
+                }
+                */
 
                 //verify and get client version 2~3~ticket
                 if (packet_data.Length == 3 && (packet_data[0] + packet_data[1]) == "23")

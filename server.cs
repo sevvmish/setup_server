@@ -13,19 +13,30 @@ namespace setup_server
     
     class Server
     {
+        //for checking game servers before init of game session
         public static Dictionary<string, PingProcessor> SendPingsList = new Dictionary<string, PingProcessor>();
         public static Dictionary<string, long> ReceivedPingList = new Dictionary<string, long>();
+        //=====================================================
+
         public static Dictionary<string, byte[]> Sessions = new Dictionary<string, byte[]>();
         
+        //working with visitors on the setup server==========
         public static Dictionary<string, VisitorData> CurrentVisitors = new Dictionary<string, VisitorData>();
         public static Dictionary<string, string> FindCharacterNameByTicket = new Dictionary<string, string>();
+        //====================================================
 
+        //=============packets for UDP waiting for cheking OK
+        public static Dictionary<string, CheckingIfUDPPacketReceived> PacketsAwaitingForCheking = new Dictionary<string, CheckingIfUDPPacketReceived>();
+        //==================================================
+
+        //TIMERS========================
+        private static System.Timers.Timer queueTimer, visitorsTimer, checkUDPpacketsReceivedTimer;
+        //==============================
+        
         public static Dictionary<string, PlayerForGameSession> PlayersAwaiting = new Dictionary<string, PlayerForGameSession>();
-
-        private static System.Timers.Timer queueTimer, visitorsTimer;
-
         public static HashSet<GameSessions> GameSessionsAwaiting = new HashSet<GameSessions>();
         public static Dictionary<string, GameSessionResults> GameSessionWaitingForResult = new Dictionary<string, GameSessionResults>();
+
 
         public const float LimitForIdlePlayerToLoseQueue = 6f;
         public const float LimitForLonelyPlayerToLoseQueue = 700f;
@@ -83,7 +94,7 @@ namespace setup_server
             }
             //===========================================
 
-            //==============timer for visitors
+            //==============timer for visitors========
             visitorsTimer = new System.Timers.Timer(1000);
 
             visitorsTimer.Elapsed += delegate {
@@ -92,7 +103,18 @@ namespace setup_server
 
             visitorsTimer.AutoReset = true;
             visitorsTimer.Enabled = true;
-            //=================================
+            //=========================================
+
+            //=============check if UDP packets received=======
+            checkUDPpacketsReceivedTimer = new System.Timers.Timer(400);
+
+            checkUDPpacketsReceivedTimer.Elapsed += delegate {
+                CheckAndSendUDPPacketsControl();
+            };
+
+            checkUDPpacketsReceivedTimer.AutoReset = true;
+            checkUDPpacketsReceivedTimer.Enabled = true;
+            //=================================================
 
             Task.Run(() =>
             {
@@ -401,13 +423,25 @@ namespace setup_server
         }
 
 
-        public static Task SendDataUDP(EndPoint ipEnd, string data)
+        public static Task SendDataUDPWithChekReceiving(EndPoint ipEnd, string data)
         {
             try
             {
-                //ServerUDP.SendAsync(ipEnd, data);
                 ServerUDP.Send(ipEnd, data);
-                //Console.WriteLine("out&" + data + "$" + starter.stopWatch.ElapsedMilliseconds);
+                PacketsAwaitingForCheking.Add(functions.get_random_set_of_symb(8), new CheckingIfUDPPacketReceived(data, ipEnd));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("==============ERROR================\n" + ex + "\n" + DateTime.Now + "\n" + "==================ERROR_END===========\n");
+            }
+            return Task.CompletedTask;
+        }
+
+        public static Task SendDataUDP(EndPoint ipEnd, string data)
+        {
+            try
+            {                
+                ServerUDP.Send(ipEnd, data);                
             }
             catch (Exception ex)
             {
@@ -419,16 +453,23 @@ namespace setup_server
         public static Task SendDataUDP(EndPoint ipEnd, byte[] data)
         {
             try
-            {
-                //ServerUDP.SendAsync(ipEnd, data);
-                ServerUDP.Send(ipEnd, data);
-                //Console.WriteLine("out&" + data + "$" + starter.stopWatch.ElapsedMilliseconds);
+            {                
+                ServerUDP.Send(ipEnd, data);                
             }
             catch (Exception ex)
             {
                 Console.WriteLine("==============ERROR================\n" + ex + "\n" + DateTime.Now + "\n" + "==================ERROR_END===========\n");
             }
             return Task.CompletedTask;
+        }
+
+
+        public static void CheckAndSendUDPPacketsControl()
+        {
+            foreach (string keys in PacketsAwaitingForCheking.Keys)
+            {
+                SendDataUDP(PacketsAwaitingForCheking[keys].address, PacketsAwaitingForCheking[keys].packet);
+            }
         }
 
 
@@ -1049,11 +1090,24 @@ namespace setup_server
                         string res = Encoding.UTF8.GetString(t, 0, t.Length);                        
                         string[] packet = res.Split('~');                        
 
-                        if (packet[1]=="6" && packet[2]=="0" && Server.CurrentVisitors.ContainsKey(packet[3]) && Server.CurrentVisitors[packet[3]].GetCharacter== packet[4])
+                        //just pinging 7~0~ticket(3)~char(4)
+                        if (packet[1]=="7" && packet[2]=="0" && Server.CurrentVisitors.ContainsKey(packet[3]) && Server.CurrentVisitors[packet[3]].GetCharacter== packet[4])
                         {
                             Server.CurrentVisitors[packet[3]].Update();                            
                             Server.CurrentVisitors[packet[3]].SetAddress(endpoint);                            
                         }
+
+
+                        //packet received OK cheking 7~10~packetID
+                        if (packet[1] == "7" && packet[2] == "10" && packet_analyzer.StringChecker(packet[3]))
+                        {
+                            if (Server.PacketsAwaitingForCheking.ContainsKey(packet[3]))
+                            {
+                                Server.PacketsAwaitingForCheking.Remove(packet[3]);
+                            }
+                        }
+
+
                     }
 
 
@@ -1080,6 +1134,18 @@ namespace setup_server
         }
     }
 
+    public struct CheckingIfUDPPacketReceived
+    {
+        public EndPoint address;
+        public string packet;
+
+        public CheckingIfUDPPacketReceived(string _packet, EndPoint _address)
+        {
+            packet = _packet;
+            address = _address;
+        }
+
+    }
 
     public class VisitorData
     {
