@@ -22,15 +22,15 @@ namespace setup_server
         
         //working with visitors on the setup server==========
         public static Dictionary<string, VisitorData> CurrentVisitors = new Dictionary<string, VisitorData>();
-        public static Dictionary<string, string> FindCharacterNameByTicket = new Dictionary<string, string>();
+        public static Dictionary<int, string> FindCharacterByID = new Dictionary<int, string>();
         //====================================================
 
-        //=============packets for UDP waiting for cheking OK
+        //=============packets for UDP waiting for promt OK
         public static Dictionary<string, CheckingIfUDPPacketReceived> PacketsAwaitingForCheking = new Dictionary<string, CheckingIfUDPPacketReceived>();
         //==================================================
 
         //TIMERS========================
-        private static System.Timers.Timer queueTimer, visitorsTimer, checkUDPpacketsReceivedTimer;
+        private static System.Timers.Timer queueTimer, visitorsTimer;
         //==============================
         
         public static Dictionary<string, PlayerForGameSession> PlayersAwaiting = new Dictionary<string, PlayerForGameSession>();
@@ -46,6 +46,7 @@ namespace setup_server
         public const float TimeForMakingIsChekedToREADY = 10f;
         public const int HowManyPlayersInBattleRoyale = 8;
         public const float TimeForDeleteInactiveVisitor = 3f;
+        public const int MaxTrySendingUDPWithPromt = 4;
 
         //gamehubs cheking
         private static List<int> existingRegionServers = new List<int>();
@@ -105,17 +106,7 @@ namespace setup_server
             visitorsTimer.Enabled = true;
             //=========================================
 
-            //=============check if UDP packets received=======
-            checkUDPpacketsReceivedTimer = new System.Timers.Timer(400);
-
-            checkUDPpacketsReceivedTimer.Elapsed += delegate {
-                CheckAndSendUDPPacketsControl();
-            };
-
-            checkUDPpacketsReceivedTimer.AutoReset = true;
-            checkUDPpacketsReceivedTimer.Enabled = true;
-            //=================================================
-
+            
             Task.Run(() =>
             {
                 ServerUDP = new UDPServerConnector(IPAddress.Any, port_udp_for_SETUP);
@@ -423,19 +414,35 @@ namespace setup_server
         }
 
 
-        public static Task SendDataUDPWithChekReceiving(EndPoint ipEnd, string data)
+
+        public static async void SendDataUDPWithChekReceiving(EndPoint ipEnd, string data)
         {
+            
+
             try
             {
-                ServerUDP.Send(ipEnd, data);
-                PacketsAwaitingForCheking.Add(functions.get_random_set_of_symb(8), new CheckingIfUDPPacketReceived(data, ipEnd));
+                string _key = functions.get_random_set_of_symb(8);
+                PacketsAwaitingForCheking.Add(_key, new CheckingIfUDPPacketReceived(data, ipEnd));
+
+                for (int i = 0; i < MaxTrySendingUDPWithPromt; i++)
+                {
+                    if (PacketsAwaitingForCheking.ContainsKey(_key))
+                    {
+                        ServerUDP.Send(ipEnd, data);
+                    }
+
+                    await Task.Delay(250);
+                }
+
+                
             }
             catch (Exception ex)
             {
                 Console.WriteLine("==============ERROR================\n" + ex + "\n" + DateTime.Now + "\n" + "==================ERROR_END===========\n");
             }
-            return Task.CompletedTask;
+            
         }
+
 
         public static Task SendDataUDP(EndPoint ipEnd, string data)
         {
@@ -1107,12 +1114,7 @@ namespace setup_server
                             }
                         }
 
-
-                    }
-
-
-
-                    
+                    }                   
                     
 
                 }
@@ -1150,17 +1152,31 @@ namespace setup_server
     public class VisitorData
     {
         private string characterName;
+        private int characterID;
         private string ticket;
         private DateTime lastUpdate;
         private EndPoint address;
 
-        public VisitorData(string name, string id, EndPoint _address)
+        public VisitorData(string name, string ticket_id, EndPoint _address, int char_id)
         {
-            Console.WriteLine(DateTime.Now +  ": added new visitor " + name + " with ticket " + id);
+            Console.WriteLine(DateTime.Now +  ": added new visitor " + name + " with ticket " + ticket_id);
             characterName = name;
-            ticket = id;
+            ticket = ticket_id;
             lastUpdate = DateTime.Now;
             address = _address;
+            characterID = char_id;
+        }
+
+        public int CharacterID
+        {
+            get
+            {
+                return characterID;
+            }
+            private set
+            {
+                characterID = value;
+            }
         }
 
         public EndPoint Address

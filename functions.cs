@@ -337,32 +337,44 @@ namespace setup_server
         }
 
 
-        public static void AddOrUpdateVisitors(string ticket, string name)
+        public static void AddOrUpdateVisitors(string ticket, string name, int char_id)
         {
-
+            
             //add or refresh data about visitor========
 
-            if (!Server.FindCharacterNameByTicket.ContainsKey(name))
+            if (!Server.FindCharacterByID.ContainsKey(char_id))
             {
-                Server.FindCharacterNameByTicket.Add(name, ticket);
+                Server.FindCharacterByID.Add(char_id, ticket);
             }
             else
             {
-                Server.FindCharacterNameByTicket[name] = ticket;
+                Server.FindCharacterByID[char_id] = ticket;
             }
 
-
+            
 
             if (!Server.CurrentVisitors.ContainsKey(ticket))
             {
 
-                Server.CurrentVisitors.Add(ticket, new VisitorData(name, ticket, null));
+                Server.CurrentVisitors.Add(ticket, new VisitorData(name, ticket, null, char_id));
             }
             else
             {
                 Server.CurrentVisitors[ticket].Update();
             }
             //========================================
+        }
+
+        public static bool CheckVisitorStateByID(int ID)
+        {
+            if (Server.FindCharacterByID.ContainsKey(ID) && Server.CurrentVisitors.ContainsKey(Server.FindCharacterByID[ID]))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
 
     }

@@ -24,7 +24,7 @@ namespace setup_server
                 string[] packet_data = data.Split('~');
                 //Console.WriteLine(data);
 
-                /*
+                
                 //get current friend list  7~1~ticket~char
                 if (packet_data.Length == 4 && (packet_data[0] + packet_data[1]) == "71")
                 {
@@ -34,17 +34,47 @@ namespace setup_server
                         return $"7~1~wds"; //wrong digits or signs                    
                     }
 
-                    string[,] check_ticket = mysql.GetMysqlSelect($"SELECT `user_id` FROM `users` WHERE `ticket_id`='{packet_data[2]}'").Result;
+                    //SELECT characters.character_id,characters.character_name FROM characters, friends WHERE friends.friend_character_id=characters.character_id AND friends.character_id=(SELECT characters.character_id FROM characters WHERE characters.character_name='warkostyapc' AND characters.user_id=(SELECT users.user_id FROM users WHERE users.ticket_id='aXhT2f8vCo'))
 
-                    if (check_ticket.GetLength(0) == 0 || check_ticket[0, 0] == "error")
+                    string[,] get_data = mysql.GetMysqlSelect($"SELECT characters.character_id,characters.character_name FROM characters, friends " +
+                        $"WHERE friends.friend_character_id=characters.character_id AND " +
+                        $"friends.character_id=(SELECT characters.character_id FROM characters WHERE characters.character_name='{packet_data[3]}' " +
+                        $"AND characters.user_id=(SELECT users.user_id FROM users WHERE users.ticket_id='{packet_data[2]}'))").Result;
+
+                    if (get_data.GetLength(0) == 0 || get_data[0, 0] == "error")
                     {
-                        Console.WriteLine(DateTime.Now + ": send problem 7~1~nst to user from - " + endpoint_address);
-                        return $"7~1~nst";
+                        Console.WriteLine(DateTime.Now + ": send problem 7~1 error getting friend list to user from - " + endpoint_address);
+                        return $"7~1~err";
                     }
 
-                    kjdfsgkjdfhg
+                    string result = $"7~1~{get_data.GetLength(0)}";
+
+                    for (int i = 0; i < get_data.GetLength(0); i++)
+                    {
+                        int isActive = 0;
+
+                        for (int u = 0; u < 3; u++)
+                        {                            
+                            if (u==0 && functions.CheckVisitorStateByID(int.Parse(get_data[i, u])))
+                            {
+                                isActive = 1;
+                            }
+
+                            if (u==2)
+                            {
+                                result += $"~{isActive}";
+                            }
+                            else
+                            {
+                                result += $"~{get_data[i, u]}";
+                            }
+                            
+                        }                        
+                    }
+
+                    return result;                
                 }
-                */
+                
 
                 //verify and get client version 2~3~ticket
                 if (packet_data.Length == 3 && (packet_data[0] + packet_data[1]) == "23")
@@ -154,7 +184,7 @@ namespace setup_server
                         return $"2~0~wds"; //wrong digits or signs                    
                     }
 
-                    string[,] get_char_data = mysql.GetMysqlSelect($"SELECT `speed`, `health`, `health_regen`, `energy_regen`, `weapon_attack`, `hit_power`, `armor`, `shield_block`, `magic_resistance`, `dodge`, `cast_speed`, `melee_crit`, `magic_crit`, `spell_power`, `spell1`, `spell2`, `spell3`, `spell4`, `spell5`, `spell6`, `spell_book`, `talents` FROM `character_property` WHERE character_property.character_id = (SELECT characters.character_id FROM characters WHERE characters.character_name = '{packet_data[3]}')  AND((SELECT users.user_id FROM users WHERE users.ticket_id = '{packet_data[2]}') = (SELECT characters.user_id FROM characters WHERE characters.character_name = '{packet_data[3]}')) ").Result;
+                    string[,] get_char_data = mysql.GetMysqlSelect($"SELECT `character_id`,`speed`, `health`, `health_regen`, `energy_regen`, `weapon_attack`, `hit_power`, `armor`, `shield_block`, `magic_resistance`, `dodge`, `cast_speed`, `melee_crit`, `magic_crit`, `spell_power`, `spell1`, `spell2`, `spell3`, `spell4`, `spell5`, `spell6`, `spell_book`, `talents` FROM `character_property` WHERE character_property.character_id = (SELECT characters.character_id FROM characters WHERE characters.character_name = '{packet_data[3]}')  AND((SELECT users.user_id FROM users WHERE users.ticket_id = '{packet_data[2]}') = (SELECT characters.user_id FROM characters WHERE characters.character_name = '{packet_data[3]}')) ").Result;
 
                     if (get_char_data.GetLength(0)==0 || get_char_data[0,0]=="error")
                     {
@@ -163,17 +193,18 @@ namespace setup_server
                     }
 
                     //data about visitors==============
-                    functions.AddOrUpdateVisitors(packet_data[2], packet_data[3]);
+                    functions.AddOrUpdateVisitors(packet_data[2], packet_data[3], int.Parse(get_char_data[0, 0]));
                     //================================
 
                     string result = "";
 
-                    for (int i = 0; i <= 21; i++)
-                    {
+                    for (int i = 1; i <= 22; i++)
+                    {                        
                         result = result + get_char_data[0, i] + "~";
                     }
 
                     Console.WriteLine(DateTime.Now + ": char " + packet_data[3] + " - desciption send to user ticket " + packet_data[2] + " from " + endpoint_address);
+
                     return $"2~0~{result}";
                 }
 
