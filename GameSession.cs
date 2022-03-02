@@ -199,8 +199,7 @@ namespace setup_server
                     //================================PVP raiting================
                     string[,] pvp_r = mysql.GetMysqlSelect($"SELECT `pvp_raiting` FROM `character_raiting` WHERE `character_id`='{_char_id[i]}' ").Result;
 
-                    Console.WriteLine(pvp_r.GetLength(0) + " -------------------------");
-
+                    
                     if (pvp_r.GetLength(0)==0 || pvp_r[0, 0]=="error")
                     {
                         pvp_raiting.Add("0");
@@ -209,8 +208,7 @@ namespace setup_server
                     {
                         pvp_raiting.Add(pvp_r[0, 0]);
                     }
-                                       
-
+                                      
 
                     string _new_tickets = functions.get_random_set_of_symb(8);
 
