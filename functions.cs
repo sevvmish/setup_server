@@ -337,7 +337,7 @@ namespace setup_server
         }
 
 
-        public static void AddOrUpdateVisitors(string ticket, string name, int char_id)
+        public static void AddOrUpdateVisitors(string ticket, string name, string char_id)
         {
             
             //add or refresh data about visitor========
@@ -365,7 +365,7 @@ namespace setup_server
             //========================================
         }
 
-        public static bool CheckVisitorStateByID(int ID)
+        public static bool CheckVisitorStateByID(string ID)
         {
             if (Server.FindCharacterByID.ContainsKey(ID) && Server.CurrentVisitors.ContainsKey(Server.FindCharacterByID[ID]))
             {

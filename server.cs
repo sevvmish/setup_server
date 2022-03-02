@@ -22,7 +22,7 @@ namespace setup_server
         
         //working with visitors on the setup server==========
         public static Dictionary<string, VisitorData> CurrentVisitors = new Dictionary<string, VisitorData>();
-        public static Dictionary<int, string> FindCharacterByID = new Dictionary<int, string>();
+        public static Dictionary<string, string> FindCharacterByID = new Dictionary<string, string>();
         //====================================================
 
         //=============packets for UDP waiting for promt OK
@@ -1152,12 +1152,12 @@ namespace setup_server
     public class VisitorData
     {
         private string characterName;
-        private int characterID;
+        private string characterID;
         private string ticket;
         private DateTime lastUpdate;
         private EndPoint address;
 
-        public VisitorData(string name, string ticket_id, EndPoint _address, int char_id)
+        public VisitorData(string name, string ticket_id, EndPoint _address, string char_id)
         {
             Console.WriteLine(DateTime.Now +  ": added new visitor " + name + " with ticket " + ticket_id);
             characterName = name;
@@ -1167,7 +1167,7 @@ namespace setup_server
             characterID = char_id;
         }
 
-        public int CharacterID
+        public string CharacterID
         {
             get
             {

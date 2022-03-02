@@ -41,6 +41,8 @@ namespace setup_server
                         $"friends.character_id=(SELECT characters.character_id FROM characters WHERE characters.character_name='{packet_data[3]}' " +
                         $"AND characters.user_id=(SELECT users.user_id FROM users WHERE users.ticket_id='{packet_data[2]}'))").Result;
 
+                    
+
                     if (get_data.GetLength(0) == 0 || get_data[0, 0] == "error")
                     {
                         Console.WriteLine(DateTime.Now + ": send problem 7~1 error getting friend list to user from - " + endpoint_address);
@@ -55,7 +57,7 @@ namespace setup_server
 
                         for (int u = 0; u < 3; u++)
                         {                            
-                            if (u==0 && functions.CheckVisitorStateByID(int.Parse(get_data[i, u])))
+                            if (u==0 && functions.CheckVisitorStateByID(get_data[i, u]))
                             {
                                 isActive = 1;
                             }
@@ -119,7 +121,7 @@ namespace setup_server
 
                     if (result.GetLength(0) == 0 || result[0, 0] == "error")
                     {
-                        Console.WriteLine(DateTime.Now + ": send problem 2~2~nsc to user from - " + endpoint_address);
+                        Console.WriteLine(DateTime.Now + ": no messages or error getting data - " + endpoint_address);
                         return $"2~2~no";
                     }
 
@@ -193,7 +195,7 @@ namespace setup_server
                     }
 
                     //data about visitors==============
-                    functions.AddOrUpdateVisitors(packet_data[2], packet_data[3], int.Parse(get_char_data[0, 0]));
+                    functions.AddOrUpdateVisitors(packet_data[2], packet_data[3], get_char_data[0, 0]);
                     //================================
 
                     string result = "";
