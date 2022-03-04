@@ -24,7 +24,131 @@ namespace setup_server
                 string[] packet_data = data.Split('~');
                 //Console.WriteLine(data);
 
-                
+
+                //get player PVP raiting data 7~4~ticket~IDtoCHECK
+                if (packet_data.Length == 4 && (packet_data[0] + packet_data[1]) == "74")
+                {
+                    if (!StringChecker(packet_data[2]) || !StringChecker(packet_data[3]))
+                    {
+                        Console.WriteLine(DateTime.Now + ": send problem 7~4~wds to user from - " + endpoint_address);
+                        return $"7~4~wds"; //wrong digits or signs                    
+                    }
+
+                    string[,] get_char_id = mysql.GetMysqlSelect($"SELECT `character_id` FROM `characters` WHERE `user_id`=(SELECT users.user_id FROM users WHERE users.ticket_id='{packet_data[2]}')").Result;
+
+                    if (get_char_id.GetLength(0) == 0 || get_char_id[0, 0] == "error")
+                    {
+                        Console.WriteLine(DateTime.Now + ": send problem 7~4~nst to user from - " + endpoint_address);
+                        return $"7~4~nst";
+                    }
+
+                    //get PVP data
+                    string[,] get_char_statistics = mysql.GetMysqlSelect($"SELECT `pvp_raiting`, `pvp_played`, `pvp_won`, `pvp_lost`, `xp_points` FROM `character_raiting` WHERE `character_id`='{packet_data[3]}'").Result;
+
+                    if (get_char_statistics.GetLength(0) == 0 || get_char_statistics[0, 0] == "error")
+                    {
+                        Console.WriteLine(DateTime.Now + ": error to user from - " + endpoint_address);
+                        return $"7~4~err";
+                    }
+
+                    //get player name and type
+                    string[,] get_char_name = mysql.GetMysqlSelect($"SELECT `character_name`,`character_type` FROM `characters` WHERE `character_id`='{packet_data[3]}'").Result;
+
+                    if (get_char_name.GetLength(0) == 0 || get_char_name[0, 0] == "error")
+                    {
+                        Console.WriteLine(DateTime.Now + ": error to user from - " + endpoint_address);
+                        return $"7~4~err";
+                    }
+
+                    Console.WriteLine(DateTime.Now + ": name and PVP data send to - " + endpoint_address);
+                    return $"7~4~{get_char_name[0, 0]}~{get_char_name[0, 1]}~{get_char_statistics[0, 0]}~{get_char_statistics[0, 1]}~{get_char_statistics[0, 2]}~{get_char_statistics[0, 3]}~{get_char_statistics[0, 4]}";
+
+                }
+
+                //remove friend 7~3~ticket~IDtoREM
+                if (packet_data.Length == 4 && (packet_data[0] + packet_data[1]) == "73")
+                {
+                    if (!StringChecker(packet_data[2]) || !StringChecker(packet_data[3]))
+                    {
+                        Console.WriteLine(DateTime.Now + ": send problem 7~2~wds to user from - " + endpoint_address);
+                        return $"7~3~wds"; //wrong digits or signs                    
+                    }
+
+                    string[,] get_char_id = mysql.GetMysqlSelect($"SELECT `character_id` FROM `characters` WHERE `user_id`=(SELECT users.user_id FROM users WHERE users.ticket_id='{packet_data[2]}')").Result;
+
+                    if (get_char_id.GetLength(0) == 0 || get_char_id[0, 0] == "error")
+                    {
+                        Console.WriteLine(DateTime.Now + ": send problem 7~3~nst to user from - " + endpoint_address);
+                        return $"7~3~nst";
+                    }
+
+                    string charID = get_char_id[0, 0];
+
+                    bool result = mysql.ExecuteSQLInstruction($"DELETE FROM `friends` WHERE `character_id`='{charID}' AND `friend_character_id`='{packet_data[3]}'").Result;
+
+                    if (result)
+                    {
+                        Console.WriteLine(DateTime.Now + ": friend removed from friend list - to user from - " + endpoint_address);
+                        return $"7~3~ok";
+                    }
+                    else
+                    {
+                        Console.WriteLine(DateTime.Now + ": error removing friend form friend list - to user from - " + endpoint_address);
+                        return $"7~3~err";
+                    }
+                }
+
+
+                //add friend 7~2~ticket~IDtoadd
+                if (packet_data.Length == 4 && (packet_data[0] + packet_data[1]) == "72")
+                {
+                    if (!StringChecker(packet_data[2]) || !StringChecker(packet_data[3]))
+                    {
+                        Console.WriteLine(DateTime.Now + ": send problem 7~2~wds to user from - " + endpoint_address);
+                        return $"7~2~wds"; //wrong digits or signs                    
+                    }
+
+                    string[,] get_char_id = mysql.GetMysqlSelect($"SELECT `character_id` FROM `characters` WHERE `user_id`=(SELECT users.user_id FROM users WHERE users.ticket_id='{packet_data[2]}')").Result;
+
+                    if (get_char_id.GetLength(0) == 0 || get_char_id[0, 0] == "error")
+                    {
+                        Console.WriteLine(DateTime.Now + ": send problem 7~2~nst to user from - " + endpoint_address);
+                        return $"7~2~nst";
+                    }
+                    string charID = get_char_id[0, 0];
+
+                    //check if me and friend equal
+                    if (charID == packet_data[3])
+                    {
+                        Console.WriteLine(DateTime.Now + ": player cant add himself to a friend list - to user from - " + endpoint_address);
+                        return $"7~2~err";
+                    }
+
+                    //check if such friend allready in friend list
+                    string[,] check_double_err = mysql.GetMysqlSelect($"SELECT `friend_character_id` FROM `friends` WHERE `character_id`='{charID}' AND `friend_character_id`='{packet_data[3]}'").Result;
+
+                    if (check_double_err.GetLength(0) == 0 || check_double_err[0, 0] == "error")
+                    {
+                        Console.WriteLine(DateTime.Now + ": send problem 7~2~err - such friend allready in friend list - to user from - " + endpoint_address);
+                        return $"7~2~err";
+                    }
+
+                    //add a friend to a friend list
+                    bool result = mysql.ExecuteSQLInstruction($"INSERT INTO `friends`(`character_id`, `friend_character_id`) VALUES ('{charID}','{packet_data[3]}')").Result;
+
+                    if (result)
+                    {
+                        Console.WriteLine(DateTime.Now + ": friend added to friend list - to user from - " + endpoint_address);
+                        return $"7~2~ok";
+                    }
+                    else
+                    {
+                        Console.WriteLine(DateTime.Now + ": error adding friend to a friend list - to user from - " + endpoint_address);
+                        return $"7~2~err";
+                    }
+
+                }
+
                 //get current friend list  7~1~ticket~char
                 if (packet_data.Length == 4 && (packet_data[0] + packet_data[1]) == "71")
                 {

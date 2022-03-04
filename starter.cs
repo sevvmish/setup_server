@@ -28,13 +28,11 @@ namespace setup_server
         
 
         static void Main(string[] args)
-        {
-            //stopWatch.Start();
+        {            
             data_config.Init_data_config();
             
             Thread.Sleep(2000);
-            
-            //Task.Run(() => sendPing());
+         
             Server.Server_init_TCP_UDP();
             Console.ReadKey();
         }
