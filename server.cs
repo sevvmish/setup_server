@@ -492,6 +492,7 @@ namespace setup_server
         }
 
 
+        //start main timer for checking PVP
         public static async void AddCheCkQueueTimer(int delay, int region)
         {
             await Task.Delay(delay);

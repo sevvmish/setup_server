@@ -643,7 +643,7 @@ namespace setup_server
     class GameSessionResults
     {
         private string SessionID;
-        bool isKillThisSessionStarted;
+        private bool isKillThisSessionStarted;
         public List<PlayerForGameSession> CurrentPlayers = new List<PlayerForGameSession>();
 
         public GameSessionResults(string _sessID)
