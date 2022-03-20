@@ -37,13 +37,6 @@ namespace setup_server
             Console.ReadKey();
         }
 
-
-        static async void sendPing()
-        {
-            await Task.Delay(2000);
-            Console.WriteLine(Server.SendAndGetTCP_between_servers($"0~71~{InnerServerConnectionPassword}", 2326, "31.172.66.150", true) );
-        }
-
-                
+                                
     }
 }

@@ -25,6 +25,67 @@ namespace setup_server
                 //Console.WriteLine(data);
 
 
+                //get current friend list  7~5~ticket~what char?
+                if (packet_data.Length == 4 && (packet_data[0] + packet_data[1]) == "75")
+                {
+                    if (!StringChecker(packet_data[2]) || !StringChecker(packet_data[3]))
+                    {
+                        Console.WriteLine(DateTime.Now + ": send problem 7~5~wds to user from - " + endpoint_address);
+                        return $"7~5~wds"; //wrong digits or signs                    
+                    }
+
+                    string[,] get_data;
+
+                    if (packet_data[3]=="0")
+                    {
+                        get_data = mysql.GetMysqlSelect($"SELECT  " +
+                        $"characters.character_id, characters.character_name, characters.character_type, character_raiting.pvp_raiting FROM characters, character_raiting " +
+                        $"WHERE characters.character_id=character_raiting.character_id ORDER BY character_raiting.pvp_raiting DESC LIMIT 20").Result;
+                    }
+                    else
+                    {
+                        get_data = mysql.GetMysqlSelect($"SELECT characters.character_id, characters.character_name, characters.character_type, character_raiting.pvp_raiting " +
+                            $"FROM characters, character_raiting WHERE characters.character_id=character_raiting.character_id AND characters.character_type='{packet_data[3]}' " +
+                            $"ORDER BY character_raiting.pvp_raiting DESC LIMIT 20").Result;
+                    }
+                    
+
+                    if (get_data.GetLength(0) == 0 || get_data[0, 0] == "error")
+                    {
+                        Console.WriteLine(DateTime.Now + ": send problem 7~5 error getting friend list to user from - " + endpoint_address);
+                        return $"7~5~err";
+                    }
+
+                    string result = $"7~5~{get_data.GetLength(0)}";
+
+                    for (int i = 0; i < get_data.GetLength(0); i++)
+                    {
+                        int isActive = 0;
+
+                        for (int u = 0; u < 5; u++)
+                        {
+                            if (u == 0 && functions.CheckVisitorStateByID(get_data[i, u]))
+                            {
+                                isActive = 1;
+                            }
+
+                            if (u == 4)
+                            {
+                                result += $"~{isActive}";
+                            }
+                            else
+                            {
+                                result += $"~{get_data[i, u]}";
+                            }
+
+                        }
+                    }
+
+                    return result;
+                }
+
+
+
                 //get player PVP raiting data 7~4~ticket~IDtoCHECK
                 if (packet_data.Length == 4 && (packet_data[0] + packet_data[1]) == "74")
                 {
@@ -127,7 +188,7 @@ namespace setup_server
                     //check if such friend allready in friend list
                     string[,] check_double_err = mysql.GetMysqlSelect($"SELECT `friend_character_id` FROM `friends` WHERE `character_id`='{charID}' AND `friend_character_id`='{packet_data[3]}'").Result;
 
-                    if (check_double_err.GetLength(0) == 0 || check_double_err[0, 0] == "error")
+                    if (check_double_err.GetLength(0) != 0)
                     {
                         Console.WriteLine(DateTime.Now + ": send problem 7~2~err - such friend allready in friend list - to user from - " + endpoint_address);
                         return $"7~2~err";
@@ -198,7 +259,7 @@ namespace setup_server
                         }                        
                     }
 
-                    return result;                
+                    return result;
                 }
                 
 
@@ -287,7 +348,7 @@ namespace setup_server
                         return $"2~1~nst";
                     }
 
-                    string[,] result = mysql.GetMysqlSelect($"SELECT `pvp_raiting`, `pve_raiting`, `xp_points` FROM `character_raiting` WHERE `character_id`=(SELECT characters.character_id FROM characters WHERE characters.character_name='{packet_data[3]}')").Result;
+                    string[,] result = mysql.GetMysqlSelect($"SELECT `character_id`, `pvp_raiting`, `pvp_played`, `pvp_won`, `pvp_lost`, `pve_raiting`, `xp_points` FROM `character_raiting` WHERE `character_id`=(SELECT characters.character_id FROM characters WHERE characters.character_name='{packet_data[3]}')").Result;
 
                     if (result.GetLength(0) == 0 || result[0,0]=="error")
                     {
@@ -295,7 +356,7 @@ namespace setup_server
                         return $"2~1~nsc";
                     }
 
-                    return $"2~1~{result[0,0]}~{result[0, 1]}~{result[0, 2]}";
+                    return $"2~1~{result[0,0]}~{result[0, 1]}~{result[0, 2]}~{result[0, 3]}~{result[0, 4]}~{result[0, 5]}~{result[0, 6]}";
 
                 }
 
@@ -331,7 +392,7 @@ namespace setup_server
 
                     Console.WriteLine(DateTime.Now + ": char " + packet_data[3] + " - desciption send to user ticket " + packet_data[2] + " from " + endpoint_address);
 
-                    return $"2~0~{result}";
+                    return $"2~0~{result}{get_char_data[0, 0]}";
                 }
 
                 //start queue for any PVP
@@ -480,6 +541,8 @@ namespace setup_server
                     }
 
                     string[,] what_type_char = mysql.GetMysqlSelect($"SELECT `character_type` FROM `characters` WHERE `character_name`= '{packet_data[3]}'").Result;
+
+                    /*
                     string[,] get_pl_data = mysql.GetMysqlSelect($"SELECT `speed`, `health`, `health_regen`, `energy_regen`, `weapon_attack`, `hit_power`, `armor`, `shield_block`, `magic_resistance`, `dodge`, `cast_speed`, `melee_crit`, `magic_crit`, `spell_power`, `spell1`, `spell2`, `spell3`, `spell4`, `spell5`, `spell6`, `hidden_conds`, `spell_book`, `talents` FROM `character_types` WHERE `character_type`='{what_type_char[0,0]}'").Result;
 
                     List<string> temp_data = new List<string>();
@@ -487,11 +550,16 @@ namespace setup_server
                     {
                         temp_data.Add(get_pl_data[0,i]);
                     }
-                    talents_setup new_player_data = new talents_setup(packet_data[4], int.Parse(what_type_char[0,0]), temp_data.ToArray());
-                    //new_player_data.talents = packet_data[4];
-
                     
-                    bool creating_result = mysql.ExecuteSQLInstruction(new_player_data.prepare_to_update_sql(packet_data[3])).Result;
+                    talents_setup new_player_data = new talents_setup(packet_data[4], int.Parse(what_type_char[0,0]), temp_data.ToArray());
+                    */
+
+
+                    //bool creating_result = mysql.ExecuteSQLInstruction(new_player_data.prepare_to_update_sql(packet_data[3])).Result;
+
+                    Characters newChar = new Characters();
+                    string newData = newChar.GetSQLReadyStringForPlayerDataUPDATEByCharName(packet_data[3], int.Parse(what_type_char[0, 0]), packet_data[4]);
+                    bool creating_result = mysql.ExecuteSQLInstruction(newData).Result;
                     if (!creating_result)
                     {
                         Console.WriteLine(DateTime.Now + ": send problem 3~4~err to user from - " + endpoint_address);
