@@ -49,7 +49,7 @@ namespace setup_server
         public const int MaxTrySendingUDPWithPromt = 4;
 
         //gamehubs cheking
-        private static List<int> existingRegionServers = new List<int>();
+        public static List<int> existingRegionServers = new List<int>();
 
         //UDP     
         public const int port_udp_for_GameHubs = 2325;
@@ -71,7 +71,7 @@ namespace setup_server
         public static void Server_init_TCP_UDP()
         {
             //get right region===========================
-            List<int> existingRegionServers = new List<int>();
+            //List<int> existingRegionServers = new List<int>();
             foreach (string keys in starter.GameServerHUBs.Keys)
             {
                 if (!existingRegionServers.Contains(starter.GameServerHUBs[keys].ServerLocation))
@@ -88,7 +88,7 @@ namespace setup_server
             {
                 int _delay = 0;
                 foreach (int item in existingRegionServers)
-                {
+                {                    
                     AddCheCkQueueTimer(_delay, item);
                     _delay += 500;
                 }
@@ -511,7 +511,7 @@ namespace setup_server
 
         public static void check_queue_for_pvp(int region_id)
         {
-                      
+                       
             try
             {
                         
@@ -574,6 +574,7 @@ namespace setup_server
                         {
                             case 1:
                                 looking_for_2.Add(PlayersAwaiting[keys]);
+                                //Console.WriteLine(region_id + ": " + PlayersAwaiting[keys].GetCharacterName() + " - " + PlayersAwaiting[keys].ServerLocation);
                                 break;
 
                             case 2:
@@ -589,9 +590,13 @@ namespace setup_server
                                 break;
                         }
                     }
+
+                    
                 }
 
                 //Console.WriteLine(looking_for_2.Count + " - 1vs1..." + looking_for_4.Count + " - 2vs2..." + looking_for_BR.Count + " - BR...."  + looking_for_Any.Count + " - Any...");
+
+                
 
                 //dealing with 1vs1=================================================
                 if (looking_for_2.Count>1)
