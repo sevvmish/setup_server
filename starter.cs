@@ -12,13 +12,13 @@ namespace setup_server
         public const int passlog_max_lenth = 16;
         public const int charname_min_lenth = 6;
         public const int charname_max_lenth = 16;
-        public const string CLIENT_VERSION = "1.1";
+        public const string CLIENT_VERSION = "1.1.0";
         public const int MAX_GAME_HUBS = 4;
 
         public static byte[] secret_key_for_game_servers;
         public static string InnerServerConnectionPassword;
         public static string MysqlConnectionData_login;
-        public static string address_for_data_config = @"C:\android\data"; //@"C:\android\data"  @"/home/admin/data"
+        public static string address_for_data_config = @"/home/admin/data"; //@"C:\android\data"  @"/home/admin/data"
 
         public static Stopwatch stopWatch = new Stopwatch();
 
