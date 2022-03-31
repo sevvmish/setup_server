@@ -18,7 +18,7 @@ namespace setup_server
         public static byte[] secret_key_for_game_servers;
         public static string InnerServerConnectionPassword;
         public static string MysqlConnectionData_login;
-        public static string address_for_data_config = @"/home/admin/data"; //@"C:\android\data"  @"/home/admin/data"
+        public static string address_for_data_config = @"C:\android\data"; //@"C:\android\data"  @"/home/admin/data"
 
         public static Stopwatch stopWatch = new Stopwatch();
 
@@ -32,11 +32,27 @@ namespace setup_server
             data_config.Init_data_config();
             
             Thread.Sleep(2000);
-         
+
+            for (int i = 0; i < 100; i++)
+            {
+                Task.Run(() => test());
+            }
+
             Server.Server_init_TCP_UDP();
             Console.ReadKey();
         }
 
-                                
+        private static async void test()
+        {
+            await Task.Delay(3000);
+
+            for (int i = 0; i < 500; i++)
+            {
+                Server.SendTCP_between_servers("hjgvfhjgfcvgh", 2328, "192.168.168.140", false);
+                await Task.Delay(50);
+            }
+        }
+
+
     }
 }

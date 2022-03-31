@@ -790,6 +790,7 @@ namespace setup_server
             catch (Exception ex)
             {
                 Console.WriteLine("==============ERROR================\n" + ex + "\n" + DateTime.Now + "\n" + "==================ERROR_END===========\n");
+                IncomingDataHadler.AddBadDataSupplier(IPEndPoint.Parse(endpoint_address));
             }
 
             return "2~0~err";
@@ -832,7 +833,7 @@ namespace setup_server
                     Server.SendDataTCP(player_socket, $"0~6~0~{code}~{session_encryption.publicKeyInString}");
 
                     if (!TemporarySessionCreator.ContainsKey(code))
-                        TemporarySessionCreator.Add(code, session_encryption);
+                        TemporarySessionCreator.TryAdd(code, session_encryption);
                     Task.Run(() => CleanTempSession(code));
                     
                     return;
@@ -884,7 +885,8 @@ namespace setup_server
             }
             catch (Exception ex)
             {
-                Console.WriteLine("==============ERROR================\n" + ex + "\n" + DateTime.Now + "\n" + "==================ERROR_END===========\n");
+                Console.WriteLine("==============ERROR================\n" + ex + "\n" + DateTime.Now + "\n" + "==================ERROR_END===========\n");                
+                IncomingDataHadler.AddBadDataSupplier((IPEndPoint)player_socket.RemoteEndPoint);
             }
             
             Server.SendDataTCP(player_socket, $"0~0~ns");
@@ -917,6 +919,7 @@ namespace setup_server
             catch (Exception ex)
             {
                 Console.WriteLine("==============ERROR================\n" + ex + "\n" + data + "\n" + DateTime.Now + "\n" + "==================ERROR_END===========\n");
+                IncomingDataHadler.AddBadDataSupplier((IPEndPoint)EP);
             }
         }
 

@@ -174,62 +174,8 @@ namespace setup_server
                 int bytesRead = handler.EndReceive(ar);
 
                 if (bytesRead > 0)
-                {                  
-                    state.sb.Append(Encoding.UTF8.GetString(state.buffer, 0, bytesRead));
-
-                    if (Encoding.UTF8.GetString(state.buffer, 0, 4) == "0~71")
-                    {
-                        byte[] d = new byte[bytesRead];
-                        for (int i = 0; i < bytesRead; i++)
-                        {
-                            d[i] = state.buffer[i];
-                        }
-
-                        encryption.Decode(ref d, starter.secret_key_for_game_servers);
-
-                        packet_analyzer.StartSessionTCPInput(Encoding.UTF8.GetString(d), handler);
-
-                    } 
-                    else if (Encoding.UTF8.GetString(state.buffer, 0, 4) == "5~0~")
-                    {
-
-                        byte[] d = new byte[bytesRead];
-                        for (int i = 0; i < bytesRead; i++)
-                        {
-                            d[i] = state.buffer[i];
-                        }
-
-                        encryption.Decode(ref d, starter.secret_key_for_game_servers);
-
-                        string res = packet_analyzer.ProcessTCPInput(Encoding.UTF8.GetString(d), handler.RemoteEndPoint.ToString());
-
-                        SendDataTCP(handler, $"5~0~{res}");
-                    } 
-                    else if (!Sessions.ContainsKey(Encoding.UTF8.GetString(state.buffer, 0, 5)))  
-                    {
-                 
-                        packet_analyzer.StartSessionTCPInput(Encoding.UTF8.GetString(state.buffer, 0, bytesRead), handler);                        
-                    }                    
-                    else
-                    {
-                        byte[] d = new byte[bytesRead];
-                        for (int i = 0; i < bytesRead; i++)
-                        {
-                            d[i] = state.buffer[i];
-                        }
-
-                        encryption.Decode(ref d, Sessions[Encoding.UTF8.GetString(state.buffer, 0, 5)]);
-
-                        string back_result = packet_analyzer.ProcessTCPInput(Encoding.UTF8.GetString(d).Remove(0, 6), handler.RemoteEndPoint.ToString());
-                                           
-                        byte[] t = Encoding.UTF8.GetBytes(back_result);
-                        encryption.Encode(ref t, Sessions[Encoding.UTF8.GetString(state.buffer, 0, 5)]);
-
-                        SendDataTCP(handler, t);                                            
-                        
-                    }
-
-
+                {
+                    Task.Run(()=>IncomingDataHadler.HandleIncomingTCP(bytesRead, handler, state.buffer));
                 }
             }
             catch (Exception ex)
@@ -264,8 +210,8 @@ namespace setup_server
                 Console.WriteLine("==============ERROR================\n" + ex + "\n" + DateTime.Now + "\n" + "==================ERROR_END===========\n");
                 result = ex.ToString();
 
-                sck_tcp.Shutdown(SocketShutdown.Both);
-                sck_tcp.Close();
+                //sck_tcp.Shutdown(SocketShutdown.Both);
+                //sck_tcp.Close();
                 return result;
             }
             //===============================SEND======================================
@@ -342,6 +288,65 @@ namespace setup_server
                 sck_tcp.Close();
                 return result;
             }
+            //error case
+            sck_tcp.Shutdown(SocketShutdown.Both);
+            sck_tcp.Close();
+            return result;
+
+        }
+
+
+        public static string SendTCP_between_servers(string DataForSending, int CurrentPort, string IP, bool is_it_encoded)
+        {
+
+            int CurrentPort_tcp = (int)CurrentPort;
+            string CurrentIP_tcp = IP;
+
+            if (string.IsNullOrEmpty(CurrentIP_tcp))
+            {
+                return "error";
+            }
+
+            string result = null;
+
+            IPEndPoint endpoint_tcp = new IPEndPoint(IPAddress.Parse(CurrentIP_tcp), CurrentPort_tcp);
+            Socket sck_tcp = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            //=============================CONNECT======================================
+            try
+            {
+                sck_tcp.Connect(endpoint_tcp);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("==============ERROR================\n" + ex + "\n" + DateTime.Now + "\n" + "==================ERROR_END===========\n");
+                result = ex.ToString();
+
+                //sck_tcp.Shutdown(SocketShutdown.Both);
+                //sck_tcp.Close();
+                return result;
+            }
+            //===============================SEND======================================
+            try
+            {
+                byte[] data_to_s = Encoding.UTF8.GetBytes(DataForSending);
+
+                if (is_it_encoded)
+                {
+                    encryption.Encode(ref data_to_s, starter.secret_key_for_game_servers);
+                }
+
+                sck_tcp.Send(data_to_s);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("==============ERROR================\n" + ex + "\n" + DateTime.Now + "\n" + "==================ERROR_END===========\n");
+                result = ex.ToString();
+
+                sck_tcp.Shutdown(SocketShutdown.Both);
+                sck_tcp.Close();
+                return result;
+            }
+
             //error case
             sck_tcp.Shutdown(SocketShutdown.Both);
             sck_tcp.Close();
@@ -1066,68 +1071,9 @@ namespace setup_server
                 }
 
 
-                    
-                string data_result = Encoding.UTF8.GetString(t, 0, t.Length);
-
                 //Console.WriteLine("received " + data_result);
 
-                try
-                {
-                    string[] packet_data = data_result.Split('~');
-
-                    if (packet_data.Length>=2 && (packet_data[0] + packet_data[1]) == "07")
-                    {
-
-                        encryption.Decode(ref t, starter.secret_key_for_game_servers);
-                        data_result = Encoding.UTF8.GetString(t, 0, t.Length);
-                        packet_data = data_result.Split('~');
-
-                        if (packet_data.Length == 5 && packet_data[2]== starter.InnerServerConnectionPassword)
-                        {
-                            if (Server.SendPingsList.ContainsKey(packet_data[4]))
-                            {
-                                Console.WriteLine(packet_data[4]);
-                                Server.SendPingsList[packet_data[4]].SetReceivedTime(starter.stopWatch.ElapsedMilliseconds);
-                                Server.SendPingsList[packet_data[4]].SetSessions(int.Parse(packet_data[3]));
-                                Server.SendPingsList[packet_data[4]].SetOKGood();
-                            }
-                            
-                        }
-                    }
-
-                    string packet_key = Encoding.UTF8.GetString(t, 0, 5);
-                    
-                    if (Server.Sessions.ContainsKey(packet_key)) 
-                    {                        
-                        encryption.Decode(ref t, Server.Sessions[packet_key]);
-                        string res = Encoding.UTF8.GetString(t, 0, t.Length);                        
-                        string[] packet = res.Split('~');                        
-
-                        //just pinging 7~0~ticket(3)~char(4)
-                        if (packet[1]=="7" && packet[2]=="0" && Server.CurrentVisitors.ContainsKey(packet[3]) && Server.CurrentVisitors[packet[3]].GetCharacter== packet[4])
-                        {
-                            Server.CurrentVisitors[packet[3]].Update();                            
-                            Server.CurrentVisitors[packet[3]].SetAddress(endpoint);                            
-                        }
-
-
-                        //packet received OK cheking 7~10~packetID
-                        if (packet[1] == "7" && packet[2] == "10" && packet_analyzer.StringChecker(packet[3]))
-                        {
-                            if (Server.PacketsAwaitingForCheking.ContainsKey(packet[3]))
-                            {
-                                Server.PacketsAwaitingForCheking.Remove(packet[3]);
-                            }
-                        }
-
-                    }                   
-                    
-
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex);
-                }
+                IncomingDataHadler.HandleIncomingUDP(endpoint, t);
             }
 
             ReceiveAsync();
