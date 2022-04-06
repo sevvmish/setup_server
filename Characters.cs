@@ -68,30 +68,30 @@ namespace setup_server
             switch (playerType)
             {
                 case 1: //warrior
-                    character = new Characters(1, 250, 1, 1, "1-6", 10f, 150, 5, 1f, 1f, 1f, 3f, 1f, 1f, 9, 12, 4, 5, 3, 997, "", "0,1,2,3,4,5,6,7,8,9,10,11,12", "0");
+                    character = new Characters(1, 250, 1, 1, "1-6", 10f, 150, 5, 1f, 1f, 1f, 3f, 1f, 1f, 9, 12, 4, 5, 3, 997, "", "0,1,2,3,4,5,6,7,8,9,10,11,12", newTalents);
                     warriorImposeTalents(ref character, newTalents);
                     return character;
                 
                 case 2: //elementalist
-                    character = new Characters(1, 200, 1, 2, "1-1", 1f, 0, 0, 1f, 1f, 10f, 1f, 10f, 20f, 56, 55, 52, 53, 65, 997, "", "0,51,52,53,54,55,56,60,61,62,63,65,66,68", "0");
+                    character = new Characters(1, 200, 1, 2, "1-1", 1f, 0, 0, 1f, 1f, 10f, 1f, 10f, 20f, 56, 55, 52, 53, 65, 997, "", "0,51,52,53,54,55,56,60,61,62,63,65,66,68", newTalents);
                     warriorImposeTalents(ref character, newTalents);
                     return character;
                 
 
                 case 3: //barbarian
-                    character = new Characters(1, 280, 1, 1, "5-10", 20f, 80, 0, 10f, 1f, 1f, 3f, 1f, 1f, 101, 102, 103, 106, 105, 997, "", "0,101,102,103,104,105,106,108,109", "0");
+                    character = new Characters(1, 280, 1, 1, "5-10", 20f, 80, 0, 10f, 1f, 1f, 3f, 1f, 1f, 101, 102, 103, 106, 105, 997, "", "0,101,102,103,104,105,106,108,109", newTalents);
                     warriorImposeTalents(ref character, newTalents);
                     return character;
                 
 
                 case 4: //rogue
-                    character = new Characters(1, 220, 1, 1, "1-4", 7f, 0, 0, 1f, 10f, 1f, 10f, 1f, 1f, 151, 152, 153, 154, 155, 997, "", "0,151,152,153,154,155,156", "0");
+                    character = new Characters(1, 220, 1, 1, "1-4", 7f, 0, 0, 1f, 10f, 1f, 10f, 1f, 1f, 151, 152, 153, 154, 155, 997, "", "0,151,152,153,154,155,156", newTalents);
                     warriorImposeTalents(ref character, newTalents);
                     return character;
                 
 
                 case 5: //wizard
-                    character = new Characters(1, 200, 1, 1, "1-1", 1f, 0, 0, 1f, 1f, 1f, 1f, 5f, 20f, 201, 202, 203, 204, 205, 997, "", "0,201,202,203,204,205,206,207,208,209", "0");
+                    character = new Characters(1, 200, 1, 1, "1-1", 1f, 0, 0, 1f, 1f, 1f, 1f, 5f, 20f, 201, 202, 203, 204, 205, 997, "", "0,201,202,203,204,205,206,207,208,209", newTalents);
                     warriorImposeTalents(ref character, newTalents);
                     return character;
                 
