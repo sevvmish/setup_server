@@ -521,18 +521,19 @@ namespace setup_server
                 if (packet_data.Length == 5 && (packet_data[0] + packet_data[1]) == "34")
                 {
 
-                    if (!StringChecker(packet_data[2]) || !StringChecker(packet_data[3]))
+                    if (!StringChecker(packet_data[2]) || !StringChecker(packet_data[3]) || !StringChecker(packet_data[4]))
                     {
                         Console.WriteLine(DateTime.Now + ": send problem 3~4~wds to user from - " + endpoint_address);
                         return $"3~4~wds"; //wrong digits or signs                    
                     }
 
-                    if (!functions.check_new_talents(packet_data[4]))
+                    //check if error talent data
+                    if (packet_data[4]!="0" && packet_data[4] != "1" && packet_data[4] != "2")
                     {
-                        Console.WriteLine(DateTime.Now + ": send problem 3~4~eit to user from - " + endpoint_address);
-                        return $"3~4~eit";
+                        packet_data[4] = "0";
                     }
 
+                 
                     string[,] check_ticket_and_name = mysql.GetMysqlSelect($"SELECT `character_name` FROM `characters` WHERE(`character_name`= '{packet_data[3]}' AND characters.user_id = (SELECT user_id FROM users WHERE users.ticket_id = '{packet_data[2]}'))").Result;
                     if (check_ticket_and_name.GetLength(0)!=1 || check_ticket_and_name[0,0]!= packet_data[3])
                     {
@@ -542,18 +543,7 @@ namespace setup_server
 
                     string[,] what_type_char = mysql.GetMysqlSelect($"SELECT `character_type` FROM `characters` WHERE `character_name`= '{packet_data[3]}'").Result;
 
-                    /*
-                    string[,] get_pl_data = mysql.GetMysqlSelect($"SELECT `speed`, `health`, `health_regen`, `energy_regen`, `weapon_attack`, `hit_power`, `armor`, `shield_block`, `magic_resistance`, `dodge`, `cast_speed`, `melee_crit`, `magic_crit`, `spell_power`, `spell1`, `spell2`, `spell3`, `spell4`, `spell5`, `spell6`, `hidden_conds`, `spell_book`, `talents` FROM `character_types` WHERE `character_type`='{what_type_char[0,0]}'").Result;
-
-                    List<string> temp_data = new List<string>();
-                    for (int i = 0; i < get_pl_data.GetLength(1); i++)
-                    {
-                        temp_data.Add(get_pl_data[0,i]);
-                    }
-                    
-                    talents_setup new_player_data = new talents_setup(packet_data[4], int.Parse(what_type_char[0,0]), temp_data.ToArray());
-                    */
-
+              
 
                     //bool creating_result = mysql.ExecuteSQLInstruction(new_player_data.prepare_to_update_sql(packet_data[3])).Result;
 

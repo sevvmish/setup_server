@@ -29,14 +29,9 @@ namespace setup_server
 
         static void Main(string[] args)
         {            
-            data_config.Init_data_config();
-            
+            data_config.Init_data_config();            
             Thread.Sleep(2000);
-
-            for (int i = 0; i < 100; i++)
-            {
-                Task.Run(() => test());
-            }
+                        
 
             Server.Server_init_TCP_UDP();
             Console.ReadKey();

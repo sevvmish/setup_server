@@ -40,10 +40,10 @@ namespace setup_server
 
         public const float LimitForIdlePlayerToLoseQueue = 6f;
         public const float LimitForLonelyPlayerToLoseQueue = 700f;
-        public const float TimeForWaitBeforeAddingBot1vs1 = 10f;
-        public const float TimeForWaitBeforeAddingBotFor2vs2 = 15f;
+        public const float TimeForWaitBeforeAddingBot1vs1 = 6f;
+        public const float TimeForWaitBeforeAddingBotFor2vs2 = 8f;
         public const float TimeForWaitBeforeAddingBotForBattleRoyale = 20f;        
-        public const float TimeForMakingIsChekedToREADY = 10f;
+        public const float TimeForMakingIsChekedToREADY = 4f;
         public const int HowManyPlayersInBattleRoyale = 8;
         public const float TimeForDeleteInactiveVisitor = 3f;
         public const int MaxTrySendingUDPWithPromt = 4;
