@@ -392,6 +392,7 @@ namespace setup_server
 
                     Console.WriteLine(DateTime.Now + ": char " + packet_data[3] + " - desciption send to user ticket " + packet_data[2] + " from " + endpoint_address);
 
+
                     return $"2~0~{result}{get_char_data[0, 0]}";
                 }
 
@@ -556,6 +557,10 @@ namespace setup_server
                         return $"3~4~err";
                     }
 
+                    //analytics what talent taken========================
+                    Task.Run(()=> { mysql.ExecuteSQLInstruction($"INSERT INTO `events`(`user_id`, `character_id`, `event_type_id`, `datetime`, `data`) VALUES ((SELECT users.user_id FROM users WHERE users.ticket_id='{packet_data[2]}'),(SELECT characters.character_id FROM characters WHERE characters.character_name='{packet_data[3]}'),'2','{DateTime.Now}','{packet_data[4]}')"); });
+                    //===================================================
+
                     Console.WriteLine(DateTime.Now + ": new talents of char " + packet_data[3] + " implemented to ticket " + packet_data[2] + " from " + endpoint_address);
                     return $"3~4~ok";
                 }
@@ -566,7 +571,7 @@ namespace setup_server
                 if (packet_data.Length == 5 && (packet_data[0] + packet_data[1]) == "35")
                 {
 
-                    if (!StringChecker(packet_data[2]) || !StringChecker(packet_data[3]))
+                    if (!StringChecker(packet_data[2]) || !StringChecker(packet_data[3]) )
                     {
                         Console.WriteLine(DateTime.Now + ": send problem 3~5~wds to user from - " + endpoint_address);
                         return $"3~5~wds"; //wrong digits or signs                    
@@ -613,15 +618,33 @@ namespace setup_server
                         return $"3~5~nss";
                     }
 
+                    //change zero spell with any other=====================================
+                    
+                    for (int i = 0; i < received_spells.Length; i++)
+                    {
+                        if (received_spells[i]=="0")
+                        {
+                            for (int u = 0; u < spell_book_list.Count; u++)
+                            {
+                                if (spell_book_list[u]!="0" && !received_spells.Contains(spell_book_list[u]))
+                                {
+                                    received_spells[i] = spell_book_list[u];
+                                }
+                            }
+
+
+                        }
+                    }
+                
+
                     //check repeiting spells
                     isOK = true;
-                    for (int i = 1; i < 6; i++)
+                    for (int i = 1; i < 5; i++)
                     {
                         for (int ii = 0; ii < i; ii++)
                         {
                             if (received_spells[i]==received_spells[ii] && received_spells[i]!="0")
-                            {
-                                
+                            {                                
                                 isOK = false;
                                 break;                                
                             }
@@ -634,12 +657,17 @@ namespace setup_server
                     }
 
                     //update spells
-                    bool creating_result = mysql.ExecuteSQLInstruction($"UPDATE `character_property` SET `spell1`= '{received_spells[0]}', `spell2`= '{received_spells[1]}', `spell3`= '{received_spells[2]}', `spell4`= '{received_spells[3]}', `spell5`= '{received_spells[4]}', `spell6`= '{received_spells[5]}' WHERE `character_id`= (SELECT characters.character_id FROM characters WHERE characters.character_name = '{packet_data[3]}')").Result;
+                    bool creating_result = mysql.ExecuteSQLInstruction($"UPDATE `character_property` SET `spell1`= '{received_spells[0]}', `spell2`= '{received_spells[1]}', `spell3`= '{received_spells[2]}', `spell4`= '{received_spells[3]}', `spell5`= '{received_spells[4]}' WHERE `character_id`= (SELECT characters.character_id FROM characters WHERE characters.character_name = '{packet_data[3]}')").Result;
                     if (!creating_result)
                     {
                         Console.WriteLine(DateTime.Now + ": send problem 3~5~err to user from - " + endpoint_address);
                         return $"3~5~err";
                     }
+
+                    //analytics what talent taken========================
+                    Task.Run(() => { mysql.ExecuteSQLInstruction($"INSERT INTO `events`(`user_id`, `character_id`, `event_type_id`, `datetime`, `data`) VALUES ((SELECT users.user_id FROM users WHERE users.ticket_id='{packet_data[2]}'),(SELECT characters.character_id FROM characters WHERE characters.character_name='{packet_data[3]}'),'6','{DateTime.Now}','{received_spells[0]},{received_spells[1]},{received_spells[2]},{received_spells[3]},{received_spells[4]}')"); });
+                    //===================================================
+
 
                     Console.WriteLine(DateTime.Now + ": new spell set for char "+ packet_data[3] + " implemented to ticket" + packet_data[2] + " from " + endpoint_address);
                     return $"3~5~ok";
