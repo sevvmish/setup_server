@@ -45,9 +45,62 @@ namespace setup_server
 
                 
 
-        public string GetSQLReadyStringForPlayerDataUPDATEByCharName(string char_name, int playerType, string _talents)
+        public string GetSQLReadyStringForPlayerDataUPDATEByCharName(string char_name, int playerType, string _talents, string [] spells)
         {
             Characters character = CreateDefaultCharacter(playerType, _talents);
+
+            try
+            {
+                //check if spell doesnt match spell book
+                List<string> spell_book = character.spell_book.Split(',').ToList();
+                List<string> original_spells = spells.ToList();
+
+                for (int i = 0; i < spell_book.Count; i++)
+                {
+                    Console.WriteLine("spell book: " + spell_book[i]);
+                }
+
+                for (int i = 0; i < original_spells.Count; i++)
+                {
+                    Console.WriteLine("spells: " + original_spells[i]);
+                }
+
+                for (int i = 0; i < original_spells.Count; i++)
+                {
+                    if (!spell_book.Contains(original_spells[i]))
+                    {
+                        original_spells[i] = "0";
+                    }
+                }
+
+                //replace 0 with spells
+                for (int i = 0; i < original_spells.Count; i++)
+                {
+                    if (original_spells[i]=="0")
+                    {
+                        for (int u = 0; u < spell_book.Count; u++)
+                        {
+                            if (spell_book[u]!="0" && !original_spells.Contains(spell_book[u]))
+                            {
+                                original_spells[i] = spell_book[u];
+                                break;
+                            }
+                        }
+                    }
+                }
+                //============================
+
+                character.spell1 = int.Parse(original_spells[0]);
+                character.spell2 = int.Parse(original_spells[1]);
+                character.spell3 = int.Parse(original_spells[2]);
+                character.spell4 = int.Parse(original_spells[3]);
+                character.spell5 = int.Parse(original_spells[4]);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+            
 
             return $"UPDATE `character_property` SET {getPlayerCharacteristicsInSQLReadyStringFormatForUpdate(character)} WHERE `character_id`= (SELECT characters.character_id FROM characters WHERE characters.character_name = '{char_name}')";
         }
@@ -59,8 +112,7 @@ namespace setup_server
             return $"UPDATE `character_property` SET {getPlayerCharacteristicsInSQLReadyStringFormatForUpdate(character)} WHERE `character_id`= '{charID}'";
         }
 
-        
-
+       
         private Characters CreateDefaultCharacter(int playerType, string newTalents)
         {
             Characters character = null;

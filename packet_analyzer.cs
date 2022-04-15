@@ -535,21 +535,19 @@ namespace setup_server
                     }
 
                  
-                    string[,] check_ticket_and_name = mysql.GetMysqlSelect($"SELECT `character_name` FROM `characters` WHERE(`character_name`= '{packet_data[3]}' AND characters.user_id = (SELECT user_id FROM users WHERE users.ticket_id = '{packet_data[2]}'))").Result;
+                    string[,] check_ticket_and_name = mysql.GetMysqlSelect($"SELECT `character_name`,`character_type`,`character_id` FROM `characters` WHERE(`character_name`= '{packet_data[3]}' AND characters.user_id = (SELECT user_id FROM users WHERE users.ticket_id = '{packet_data[2]}'))").Result;
                     if (check_ticket_and_name.GetLength(0)!=1 || check_ticket_and_name[0,0]!= packet_data[3])
                     {
                         Console.WriteLine(DateTime.Now + ": send problem 3~4~eit to user from - " + endpoint_address);
                         return $"3~4~eit";
                     }
-
-                    string[,] what_type_char = mysql.GetMysqlSelect($"SELECT `character_type` FROM `characters` WHERE `character_name`= '{packet_data[3]}'").Result;
-
-              
-
-                    //bool creating_result = mysql.ExecuteSQLInstruction(new_player_data.prepare_to_update_sql(packet_data[3])).Result;
+                                        
+                    string[,] what_type_char = mysql.GetMysqlSelect($"SELECT `spell1`, `spell2`, `spell3`, `spell4`, `spell5`, `spell_book` FROM `character_property` WHERE `character_id`='{check_ticket_and_name[0,2]}'").Result;
+                    Console.WriteLine(what_type_char[0,0] + " - " + what_type_char[0, 1] + " - " + what_type_char[0, 2] + " - " + what_type_char[0, 3] + " - " + what_type_char[0, 4] + " - " + what_type_char[0, 5]);
+                    
 
                     Characters newChar = new Characters();
-                    string newData = newChar.GetSQLReadyStringForPlayerDataUPDATEByCharName(packet_data[3], int.Parse(what_type_char[0, 0]), packet_data[4]);
+                    string newData = newChar.GetSQLReadyStringForPlayerDataUPDATEByCharName(packet_data[3], int.Parse(check_ticket_and_name[0, 1]), packet_data[4], new string [] { what_type_char[0, 0], what_type_char[0, 1], what_type_char[0, 2], what_type_char[0, 3] , what_type_char[0, 4] });
                     bool creating_result = mysql.ExecuteSQLInstruction(newData).Result;
                     if (!creating_result)
                     {

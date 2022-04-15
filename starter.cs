@@ -14,6 +14,7 @@ namespace setup_server
         public const int charname_max_lenth = 16;
         public const string CLIENT_VERSION = "1.1.0";
         public const int MAX_GAME_HUBS = 4;
+        public const string IP_Main_DB_for_Sessions = "31.172.66.150";
 
         public static byte[] secret_key_for_game_servers;
         public static string InnerServerConnectionPassword;
@@ -31,8 +32,9 @@ namespace setup_server
         {            
             data_config.Init_data_config();            
             Thread.Sleep(2000);
-                        
 
+            
+            
             Server.Server_init_TCP_UDP();
             Console.ReadKey();
         }
@@ -43,7 +45,7 @@ namespace setup_server
 
             for (int i = 0; i < 500; i++)
             {
-                Server.SendTCP_between_servers("hjgvfhjgfcvgh", 2328, "192.168.168.140", false);
+                Server.SendTCP_between_servers("hjgvfhjgfcvgh", 2328, "----", false);
                 await Task.Delay(50);
             }
         }
