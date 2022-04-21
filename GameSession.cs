@@ -153,8 +153,11 @@ namespace setup_server
                     game_type_id = 2; //type of PVP - 2vs2
                     break;
                 case 3:
-                    game_type_id = 3; //battle royale
-                    break;                
+                    game_type_id = 3; //type of PVP - 3vs3
+                    break;
+                case 4:
+                    game_type_id = 4; //battle royale
+                    break;
             }
 
             List<string[]> char_d = new List<string[]>(_count);
@@ -320,7 +323,7 @@ namespace setup_server
                             }
                             break;
 
-                        case 3:
+                        case 4:
                             team_id = i;
                             switch(i)
                             {
@@ -443,6 +446,7 @@ namespace setup_server
         private int Score;
         private bool isRaitingReassessed;
         private int serverLocation;
+        public bool isBot;
 
         public bool RaitingReassessing
         {
@@ -476,6 +480,24 @@ namespace setup_server
             CurrentPlayerStatus = PlayerStatus.free;
             WhenPassedCheckOK = DateTime.Now;
             serverLocation = player_server_region;
+            isBot = false;
+        }
+
+        public PlayerForGameSession(string _char_ID, string _char_name, string _char_ticket, GameTypes _player_game_type, int _pvp_rait, int player_server_region, bool _isBot)
+        {
+            Character_ID = _char_ID;
+
+            CharacterName = _char_name;
+            CharacterTicket = _char_ticket;
+            WhenEnteredToSearchGame = DateTime.Now;
+            PlayerGameType = _player_game_type;
+            PlayerPVPRaiting = _pvp_rait;
+            isBusyForSession = false;
+            WhenLastUpdateSignal = DateTime.Now;
+            CurrentPlayerStatus = PlayerStatus.free;
+            WhenPassedCheckOK = DateTime.Now;
+            serverLocation = player_server_region;
+            isBot = _isBot;
         }
 
         public int ManageScore
@@ -626,6 +648,7 @@ namespace setup_server
         PvE_for_test = 0,
         PvP_1vs1,
         PvP_2vs2,
+        PvP_3vs3,
         PvP_battle_royale,
         PVP_any_battle
                 
@@ -718,7 +741,7 @@ namespace setup_server
 
             if (pre_result.GetLength(0)>0)
             {
-                bool result = mysql.ExecuteSQLInstruction($"UPDATE `session_archive` SET `when_ended`='{DateTime.Now}', `score`='{_player.ManageScore}' WHERE (`character_id`='{_player.GetCharacterID()}' AND `session_id`='{SessionID}' AND `player_id`='{_player.GetCharacterNewGeneratedTicket()}')").Result;
+                bool result = mysql.ExecuteSQLInstruction($"UPDATE `session_archive` SET `when_ended`='{DateTime.Now}', `score`='{_player.ManageScore}', `is_checked`='1' WHERE (`character_id`='{_player.GetCharacterID()}' AND `session_id`='{SessionID}' AND `player_id`='{_player.GetCharacterNewGeneratedTicket()}')").Result;
 
                 if (result)
                 {
@@ -734,7 +757,7 @@ namespace setup_server
                 Console.WriteLine(DateTime.Now + ": error registring new session data result in DB - no such player or session for " + _playerID);
             }
 
-            functions.ReAssessExperienceByCharID(_player.GetCharacterID());
+            RaitingImplementing.ReAssessRaitingByCharID(_player.GetCharacterID(), _player.ManageScore, (int)_player.GetPlayerGameType());
             _player.RaitingReassessing = true;
 
             if (!isKillThisSessionStarted) 
@@ -779,6 +802,11 @@ namespace setup_server
 
         public void AddPlayer(PlayerForGameSession _player)
         {
+            if (_player.isBot)
+            {
+                return;
+            }
+
             if (!CurrentPlayers.Contains(_player))
             {
                 CurrentPlayers.Add(_player);

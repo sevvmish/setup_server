@@ -456,9 +456,12 @@ namespace setup_server
                             WhatPVP = GameTypes.PvP_2vs2;
                             break;
                         case 3:
-                            WhatPVP = GameTypes.PvP_battle_royale;
+                            WhatPVP = GameTypes.PvP_2vs2;
                             break;
                         case 4:
+                            WhatPVP = GameTypes.PvP_battle_royale;
+                            break;
+                        case 5:
                             WhatPVP = GameTypes.PVP_any_battle;
                             break;
                     }
@@ -477,6 +480,7 @@ namespace setup_server
                     }
                                
                 }
+
 
                 //reset ALL QUEUES
                 //3~101~ticket~character
@@ -556,7 +560,7 @@ namespace setup_server
                     }
 
                     //analytics what talent taken========================
-                    Task.Run(()=> { mysql.ExecuteSQLInstruction($"INSERT INTO `events`(`user_id`, `character_id`, `event_type_id`, `datetime`, `data`) VALUES ((SELECT users.user_id FROM users WHERE users.ticket_id='{packet_data[2]}'),(SELECT characters.character_id FROM characters WHERE characters.character_name='{packet_data[3]}'),'2','{DateTime.Now}','{packet_data[4]}')"); });
+                    bool isOK1 = mysql.ExecuteSQLInstruction($"INSERT INTO `events`(`user_id`, `character_id`, `event_type_id`, `datetime`, `data`) VALUES ((SELECT users.user_id FROM users WHERE users.ticket_id='{packet_data[2]}'),(SELECT characters.character_id FROM characters WHERE characters.character_name='{packet_data[3]}'),'2','{DateTime.Now}','{packet_data[4]}')").Result;
                     //===================================================
 
                     Console.WriteLine(DateTime.Now + ": new talents of char " + packet_data[3] + " implemented to ticket " + packet_data[2] + " from " + endpoint_address);
@@ -663,7 +667,7 @@ namespace setup_server
                     }
 
                     //analytics what talent taken========================
-                    Task.Run(() => { mysql.ExecuteSQLInstruction($"INSERT INTO `events`(`user_id`, `character_id`, `event_type_id`, `datetime`, `data`) VALUES ((SELECT users.user_id FROM users WHERE users.ticket_id='{packet_data[2]}'),(SELECT characters.character_id FROM characters WHERE characters.character_name='{packet_data[3]}'),'6','{DateTime.Now}','{received_spells[0]},{received_spells[1]},{received_spells[2]},{received_spells[3]},{received_spells[4]}')"); });
+                    bool isOK1 = mysql.ExecuteSQLInstruction($"INSERT INTO `events`(`user_id`, `character_id`, `event_type_id`, `datetime`, `data`) VALUES ((SELECT users.user_id FROM users WHERE users.ticket_id='{packet_data[2]}'),(SELECT characters.character_id FROM characters WHERE characters.character_name='{packet_data[3]}'),'6','{DateTime.Now}','{received_spells[0]},{received_spells[1]},{received_spells[2]},{received_spells[3]},{received_spells[4]}')").Result ;
                     //===================================================
 
 
@@ -749,7 +753,11 @@ namespace setup_server
                         }
                         Server.GameSessionWaitingForResult[_new_session].AddPlayer(Server.PlayersAwaiting[get_char_id]);
                         Task.Run(() => Server.GameSessionWaitingForResult[_new_session].RegisterNewSessionDataByPlayerID(_new_ticket));
-                        
+
+                        //analysis==========================
+                        bool isOK = mysql.ExecuteSQLInstruction($"INSERT INTO `events`(`user_id`, `character_id`, `event_type_id`, `datetime`, `data`) VALUES ((SELECT `user_id` FROM `characters` WHERE `character_id`='{get_char_id}'), '{get_char_id}', '7', '{DateTime.Now}', '{(int)Server.PlayersAwaiting[get_char_id].GetPlayerGameType()}')").Result;
+                        //==================================
+
                         Server.PlayersAwaiting[get_char_id].SetStatusToGONE();
                         Server.PlayersAwaiting.Remove(get_char_id);
                         
@@ -759,7 +767,7 @@ namespace setup_server
 
                 }
 
-                //receive data about played games for statistics    5~0~session~number of players~ticket pl1~ score pl1~ticket pl2 ~ score pl2
+                //receive data about played games for statistics    5~0~session~serverkey~number of players~ticket pl1~ score pl1~ticket pl2 ~ score pl2
                 if (packet_data.Length >= 6 && (packet_data[0] + packet_data[1]) == "50")
                 {
                     for (int i = 0; i < packet_data.Length; i++)
@@ -771,15 +779,21 @@ namespace setup_server
                         }
                     }
 
+                    if (packet_data[3]!=starter.InnerServerConnectionPassword)
+                    {
+                        Console.WriteLine(DateTime.Now + ": problem with getting data about played session - wrong inner password -> " + packet_data[2]);
+                        return $"5~0~er3"; 
+                    }
+
                     if (!Server.GameSessionWaitingForResult.ContainsKey(packet_data[2]))
                     {
                         Console.WriteLine(DateTime.Now + ": problem with getting data about played session - no such session awaiting -> " + packet_data[2]);
                         return $"5~0~er2"; //wrong session ID
                     }
 
-                    int _number = int.Parse(packet_data[3]);
+                    int _number = int.Parse(packet_data[4]);
 
-                    int x = 4;
+                    int x = 5;
                     for (int i = 0; i < _number; i++)
                     {
                         foreach (var items in Server.GameSessionWaitingForResult[packet_data[2]].CurrentPlayers)
@@ -792,6 +806,7 @@ namespace setup_server
                                 items.ManageScore = int.Parse(packet_data[x + 1]);
                                 string ID = packet_data[x];
                                 Task.Run(()=> Server.GameSessionWaitingForResult[packet_data[2]].RegisterNewSessionDataRESULTSByPlayerID(ID));
+                               
                             }
                         }
 

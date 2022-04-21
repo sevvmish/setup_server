@@ -760,11 +760,11 @@ namespace setup_server
             switch (rnd.Next(1, 3))
             {
                 case 1:
-                    return new PlayerForGameSession("-1", "warrior bot", "botttt", _type, 0, 0);
-                    break;
+                    return new PlayerForGameSession("-1", "warrior bot", "botttt", _type, 0, 0, true);
+                    
                 case 2:
-                    return new PlayerForGameSession("-2", "elem bot", "botttt", _type, 0, 0);
-                    break;
+                    return new PlayerForGameSession("-2", "elem bot", "botttt", _type, 0, 0, true);
+                    
             }
 
             return null;
