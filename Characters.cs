@@ -137,7 +137,7 @@ namespace setup_server
                 
 
                 case 4: //rogue
-                    character = new Characters(1, 220, 1, 1, "1-4", 7f, 0, 0, 1f, 10f, 1f, 10f, 1f, 1f, 151, 152, 153, 154, 155, 997, "", "0,151,152,153,154,155,156", newTalents);
+                    character = new Characters(1, 220, 1, 15, "1-4", 7f, 0, 0, 1f, 10f, 1f, 10f, 1f, 1f, 151, 152, 153, 154, 155, 997, "", "0,151,152,153,154,155,156", newTalents);
                     warriorImposeTalents(ref character, newTalents);
                     return character;
                 

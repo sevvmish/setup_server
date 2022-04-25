@@ -126,16 +126,16 @@ namespace setup_server
 
                 }
 
-                //remove friend 7~3~ticket~IDtoREM
-                if (packet_data.Length == 4 && (packet_data[0] + packet_data[1]) == "73")
+                //remove friend 7~3~ticket~myname~IDtoREM
+                if (packet_data.Length == 5 && (packet_data[0] + packet_data[1]) == "73")
                 {
-                    if (!StringChecker(packet_data[2]) || !StringChecker(packet_data[3]))
+                    if (!StringChecker(packet_data[2]) || !StringChecker(packet_data[3]) || !StringChecker(packet_data[4]))
                     {
                         Console.WriteLine(DateTime.Now + ": send problem 7~2~wds to user from - " + endpoint_address);
                         return $"7~3~wds"; //wrong digits or signs                    
                     }
 
-                    string[,] get_char_id = mysql.GetMysqlSelect($"SELECT `character_id` FROM `characters` WHERE `user_id`=(SELECT users.user_id FROM users WHERE users.ticket_id='{packet_data[2]}')").Result;
+                    string[,] get_char_id = mysql.GetMysqlSelect($"SELECT `character_id` FROM `characters` WHERE `character_name`='{packet_data[3]}' AND `user_id`=(SELECT users.user_id FROM users WHERE users.ticket_id='{packet_data[2]}')").Result;
 
                     if (get_char_id.GetLength(0) == 0 || get_char_id[0, 0] == "error")
                     {
@@ -145,7 +145,7 @@ namespace setup_server
 
                     string charID = get_char_id[0, 0];
 
-                    bool result = mysql.ExecuteSQLInstruction($"DELETE FROM `friends` WHERE `character_id`='{charID}' AND `friend_character_id`='{packet_data[3]}'").Result;
+                    bool result = mysql.ExecuteSQLInstruction($"DELETE FROM `friends` WHERE `character_id`='{charID}' AND `friend_character_id`='{packet_data[4]}'").Result;
 
                     if (result)
                     {
@@ -160,16 +160,16 @@ namespace setup_server
                 }
 
 
-                //add friend 7~2~ticket~IDtoadd
-                if (packet_data.Length == 4 && (packet_data[0] + packet_data[1]) == "72")
+                //add friend 7~2~ticket~myplayername~IDtoadd
+                if (packet_data.Length == 5 && (packet_data[0] + packet_data[1]) == "72")
                 {
-                    if (!StringChecker(packet_data[2]) || !StringChecker(packet_data[3]))
+                    if (!StringChecker(packet_data[2]) || !StringChecker(packet_data[3]) || !StringChecker(packet_data[4]))
                     {
                         Console.WriteLine(DateTime.Now + ": send problem 7~2~wds to user from - " + endpoint_address);
                         return $"7~2~wds"; //wrong digits or signs                    
                     }
 
-                    string[,] get_char_id = mysql.GetMysqlSelect($"SELECT `character_id` FROM `characters` WHERE `user_id`=(SELECT users.user_id FROM users WHERE users.ticket_id='{packet_data[2]}')").Result;
+                    string[,] get_char_id = mysql.GetMysqlSelect($"SELECT `character_id` FROM `characters` WHERE `character_name`='{packet_data[3]}' AND `user_id`=(SELECT users.user_id FROM users WHERE users.ticket_id='{packet_data[2]}')").Result;
 
                     if (get_char_id.GetLength(0) == 0 || get_char_id[0, 0] == "error")
                     {
@@ -179,14 +179,14 @@ namespace setup_server
                     string charID = get_char_id[0, 0];
 
                     //check if me and friend equal
-                    if (charID == packet_data[3])
+                    if (charID == packet_data[4])
                     {
                         Console.WriteLine(DateTime.Now + ": player cant add himself to a friend list - to user from - " + endpoint_address);
                         return $"7~2~err";
                     }
 
                     //check if such friend allready in friend list
-                    string[,] check_double_err = mysql.GetMysqlSelect($"SELECT `friend_character_id` FROM `friends` WHERE `character_id`='{charID}' AND `friend_character_id`='{packet_data[3]}'").Result;
+                    string[,] check_double_err = mysql.GetMysqlSelect($"SELECT `friend_character_id` FROM `friends` WHERE `character_id`='{charID}' AND `friend_character_id`='{packet_data[4]}'").Result;
 
                     if (check_double_err.GetLength(0) != 0)
                     {
@@ -195,7 +195,7 @@ namespace setup_server
                     }
 
                     //add a friend to a friend list
-                    bool result = mysql.ExecuteSQLInstruction($"INSERT INTO `friends`(`character_id`, `friend_character_id`) VALUES ('{charID}','{packet_data[3]}')").Result;
+                    bool result = mysql.ExecuteSQLInstruction($"INSERT INTO `friends`(`character_id`, `friend_character_id`) VALUES ('{charID}','{packet_data[4]}')").Result;
 
                     if (result)
                     {
@@ -456,7 +456,7 @@ namespace setup_server
                             WhatPVP = GameTypes.PvP_2vs2;
                             break;
                         case 3:
-                            WhatPVP = GameTypes.PvP_2vs2;
+                            WhatPVP = GameTypes.PvP_3vs3;
                             break;
                         case 4:
                             WhatPVP = GameTypes.PvP_battle_royale;

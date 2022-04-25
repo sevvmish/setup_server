@@ -643,6 +643,7 @@ namespace setup_server
 
     }
 
+    
     public enum GameTypes
     {
         PvE_for_test = 0,
@@ -653,7 +654,7 @@ namespace setup_server
         PVP_any_battle
                 
     }
-
+    
     public enum PlayerStatus
     {
         free = 0,

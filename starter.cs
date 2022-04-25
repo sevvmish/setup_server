@@ -32,8 +32,7 @@ namespace setup_server
         {            
             data_config.Init_data_config();            
             Thread.Sleep(2000);
-
-            
+                        
             
             Server.Server_init_TCP_UDP();
             Console.ReadKey();

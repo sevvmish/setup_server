@@ -537,6 +537,7 @@ namespace setup_server
           
                 List<PlayerForGameSession> looking_for_2 = new List<PlayerForGameSession>(2);
                 List<PlayerForGameSession> looking_for_4 = new List<PlayerForGameSession>(4);
+                List<PlayerForGameSession> looking_for_6 = new List<PlayerForGameSession>(6);
                 List<PlayerForGameSession> looking_for_BR = new List<PlayerForGameSession>(HowManyPlayersInBattleRoyale);
                 List<PlayerForGameSession> looking_for_Any = new List<PlayerForGameSession>();
 
@@ -587,10 +588,14 @@ namespace setup_server
                                 break;
 
                             case 3:
-                                looking_for_BR.Add(PlayersAwaiting[keys]);
+                                looking_for_6.Add(PlayersAwaiting[keys]);
                                 break;
 
                             case 4:
+                                looking_for_BR.Add(PlayersAwaiting[keys]);
+                                break;
+
+                            case 5:
                                 looking_for_Any.Add(PlayersAwaiting[keys]);
                                 break;
                         }
