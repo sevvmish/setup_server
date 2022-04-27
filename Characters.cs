@@ -131,13 +131,13 @@ namespace setup_server
                 
 
                 case 3: //barbarian
-                    character = new Characters(1, 280, 1, 1, "5-10", 20f, 80, 0, 10f, 1f, 1f, 3f, 1f, 1f, 101, 102, 103, 106, 105, 997, "", "0,101,102,103,104,105,106,108,109", newTalents);
+                    character = new Characters(1, 280, 1, 1, "5-10", 20f, 80, 0, 10f, 1f, 1f, 3f, 1f, 1f, 101, 102, 103, 106, 105, 997, "", "0,101,102,103,104,105,106,108,109,110,111,112", newTalents);
                     warriorImposeTalents(ref character, newTalents);
                     return character;
                 
 
                 case 4: //rogue
-                    character = new Characters(1, 220, 1, 15, "1-4", 7f, 0, 0, 1f, 10f, 1f, 10f, 1f, 1f, 151, 152, 153, 154, 155, 997, "", "0,151,152,153,154,155,156", newTalents);
+                    character = new Characters(1, 220, 1, 15, "1-4", 7f, 0, 0, 1f, 10f, 1f, 10f, 1f, 1f, 151, 152, 153, 154, 155, 997, "", "0,151,152,153,154,155,156,158,159,160,161,162", newTalents);
                     warriorImposeTalents(ref character, newTalents);
                     return character;
                 
