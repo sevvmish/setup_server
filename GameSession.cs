@@ -758,7 +758,10 @@ namespace setup_server
                 Console.WriteLine(DateTime.Now + ": error registring new session data result in DB - no such player or session for " + _playerID);
             }
 
+            //main part for assessions
             RaitingImplementing.ReAssessRaitingByCharID(_player.GetCharacterID(), _player.ManageScore, (int)_player.GetPlayerGameType());
+            //=============================
+
             _player.RaitingReassessing = true;
 
             if (!isKillThisSessionStarted) 

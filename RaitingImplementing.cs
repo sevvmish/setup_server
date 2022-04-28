@@ -106,7 +106,10 @@ namespace setup_server
                 }
 
                 //analysis==========================
-                bool isOK1 = mysql.ExecuteSQLInstruction($"INSERT INTO `events`(`user_id`, `character_id`, `event_type_id`, `datetime`, `data`) VALUES ((SELECT `user_id` FROM `characters` WHERE `character_id`='{charID}'), '{charID}', '8', '{DateTime.Now}', '{foranalyticsPVP}{foranalyticsRESULT}game type:{session_type_id}')").Result;
+                string[,] char_type = mysql.GetMysqlSelect($"SELECT `character_type` FROM `characters` WHERE `character_id`='{charID}'").Result;
+                string[,] char_talents = mysql.GetMysqlSelect($"SELECT `talents` FROM `character_property` WHERE `character_id`='{charID}'").Result;
+                                
+                bool isOK1 = mysql.ExecuteSQLInstruction($"INSERT INTO `events`(`user_id`, `character_id`, `event_type_id`, `datetime`, `data`) VALUES ((SELECT `user_id` FROM `characters` WHERE `character_id`='{charID}'), '{charID}', '8', '{DateTime.Now}', '{foranalyticsPVP}{foranalyticsRESULT}score: {score}, game type: {session_type_id}, pl type: {char_type[0,0]}, pl talent: {char_talents[0,0]}')").Result;
                 //==================================
 
             }
