@@ -55,6 +55,7 @@ namespace setup_server
                 List<string> spell_book = character.spell_book.Split(',').ToList();
                 List<string> original_spells = spells.ToList();
 
+                
                 for (int i = 0; i < spell_book.Count; i++)
                 {
                     Console.WriteLine("spell book: " + spell_book[i]);
@@ -64,6 +65,7 @@ namespace setup_server
                 {
                     Console.WriteLine("spells: " + original_spells[i]);
                 }
+                
 
                 for (int i = 0; i < original_spells.Count; i++)
                 {
@@ -120,31 +122,81 @@ namespace setup_server
             switch (playerType)
             {
                 case 1: //warrior
-                    character = new Characters(1, 250, 1, 1, "1-6", 10f, 150, 5, 1f, 1f, 1f, 3f, 1f, 1f, 9, 12, 4, 5, 3, 997, "", "0,1,2,3,4,5,6,7,8,9,10,11,12", newTalents);
-                    warriorImposeTalents(ref character, newTalents);
+                    switch (newTalents)
+                    {
+                        case "0":
+                            return new Characters(1, 250, 1, 0, "1-6", 12, 120, 6, 3, 1, 1, 7, 1, 1, 9, 5, 12, 4, 17, 1018, "", "0,1,2,4,5,6,11,12,17", newTalents);
+
+                        case "1":
+                            return new Characters(1, 230, 1, 0, "2-7", 15, 50, 4, 1, 1, 1, 10, 1, 1, 9, 8, 12, 13, 3, 1018, "", "0,1,2,4,5,6,8,11,12,3,13", newTalents);
+
+                        case "2":
+                            return new Characters(1, 280, 1, 0, "1-6", 10, 200, 12, 5, 1, 1, 5, 1, 1, 5, 6, 10, 11, 19, 1018, "", "0,1,2,4,5,6,10,11,12,16,19", newTalents);
+
+                    }                    
+                    
                     return character;
                 
                 case 2: //elementalist
-                    character = new Characters(1, 200, 1, 2, "1-1", 1f, 0, 0, 1f, 1f, 10f, 1f, 10f, 20f, 56, 55, 52, 53, 65, 997, "", "0,51,52,53,54,55,56,60,61,62,63,65,66,68", newTalents);
-                    warriorImposeTalents(ref character, newTalents);
+                    switch (newTalents)
+                    {
+                        case "0":
+                            return new Characters(1, 180, 1, 1, "1-1", 1, 20, 0, 1, 1, 10, 1, 5, 20, 56, 52, 73, 68, 62, 65, "", "0,51,52,53,54,55,56,60,61,62,63,68,73", newTalents);
+
+                        case "1":
+                            return new Characters(1, 180, 1, 1, "1-1", 1, 20, 0, 1, 1, 7, 1, 7, 20, 52, 53, 54, 68, 61, 51, "", "0,52,53,54,55,56,60,61,62,63,65,68", newTalents);
+
+                        case "2":
+                            return new Characters(1, 200, 1, 1, "1-1", 1, 20, 0, 1, 1, 5, 1, 10, 20, 55, 52, 53, 74, 60, 56, "", "0,51,52,53,54,55,60,61,62,63,65,68,74", newTalents);
+                    }
+                                        
                     return character;
                 
 
                 case 3: //barbarian
-                    character = new Characters(1, 280, 1, 1, "5-10", 20f, 80, 0, 10f, 1f, 1f, 3f, 1f, 1f, 101, 102, 103, 106, 105, 997, "", "0,101,102,103,104,105,106,108,109,110,111,112", newTalents);
-                    warriorImposeTalents(ref character, newTalents);
-                    return character;
-                
+                    switch (newTalents)
+                    {
+                        case "0":
+                            return new Characters(0.85f, 300, 1, 0, "5-10", 20, 80, 0, 10, 1, 1, 5, 1, 1, 105, 102, 103, 112, 106, 1018, "", "0,101,102,103,104,105,106,108,109,111,112", newTalents);
+
+                        case "1":
+                            return new Characters(0.85f, 270, 1, 0, "6-11", 20, 80, 0, 10, 1, 1, 5, 1, 1, 105, 102, 103, 112, 106, 1018, "", "0,101,102,103,104,105,106,108,109,111,112", newTalents);
+
+                        case "2":
+                            return new Characters(0.85f, 250, 1, 0, "7-12", 20, 80, 0, 10, 1, 1, 5, 1, 1, 105, 111, 110, 109, 106, 1018, "", "0,101,102,103,104,105,106,108,109,110,111,112", newTalents);
+                    }
+                                        
+                    return character;                
 
                 case 4: //rogue
-                    character = new Characters(1, 220, 1, 15, "1-4", 7f, 0, 0, 1f, 10f, 1f, 10f, 1f, 1f, 151, 152, 153, 154, 155, 997, "", "0,151,152,153,154,155,156,158,159,160,161,162", newTalents);
-                    warriorImposeTalents(ref character, newTalents);
+                    switch (newTalents)
+                    {
+                        case "0":
+                            return new Characters(1.15f, 200, 1, 15, "1-4", 7, 50, 0, 1, 10, 1, 5, 1, 1, 152, 154, 163, 156, 161, 153, "", "0,151,152,154,156,158,159,160,161,162,163,165,172", newTalents);
+
+                        case "1":
+                            return new Characters(1.15f, 200, 1, 15, "1-4", 7, 50, 0, 1, 10, 1, 7, 1, 1, 152, 154, 163, 155, 158, 153, "", "0,151,152,154,155,158,159,160,161,162,163,165,172", newTalents);
+
+                        case "2":
+                            return new Characters(1.15f, 200, 1, 20, "1-4", 7, 50, 0, 1, 10, 1, 10, 1, 1, 152, 154, 163, 164, 158, 153, "", "0,151,152,154,155,158,159,160,161,162,163,164,165,172", newTalents);
+                    }
+                    
                     return character;
                 
 
                 case 5: //wizard
-                    character = new Characters(1, 200, 1, 1, "1-1", 1f, 0, 0, 1f, 1f, 1f, 1f, 5f, 20f, 201, 202, 203, 204, 205, 997, "", "0,201,202,203,204,205,206,207,208,209", newTalents);
-                    warriorImposeTalents(ref character, newTalents);
+                    switch (newTalents)
+                    {
+                        case "0":
+                            return new Characters(1, 200, 1, 1, "1-1", 1, 20, 0, 1, 1, 5, 1, 10, 20, 201, 202, 203, 204, 205, 206, "", "0,201,202,203,204,205,207,208,209", newTalents);
+
+                        case "1":
+                            return new Characters(1, 200, 1, 1, "1-1", 1, 20, 0, 1, 1, 5, 1, 10, 20, 201, 202, 203, 204, 205, 206, "", "0,201,202,203,204,205,207,208,209", newTalents);
+
+                        case "2":
+                            return new Characters(1, 200, 1, 1, "1-1", 1, 20, 0, 1, 1, 5, 1, 10, 20, 201, 202, 203, 204, 205, 206, "", "0,201,202,203,204,205,207,208,209", newTalents);
+                    }
+                    
                     return character;
                 
 
@@ -200,45 +252,6 @@ namespace setup_server
                 $"`spell_power`= '{character.spell_power.ToString("f1").Replace(',', '.')}', `spell1`= '{character.spell1}', `spell2`= '{character.spell2}', `spell3`= '{character.spell3}', `spell4`= '{character.spell4}', `spell5`= '{character.spell5}', `spell6`= '{character.spell6}', `hidden_conds`= '{character.hidden_conds}', `spell_book`= '{character.spell_book}', `talents`= '{character.talents}' ";
         }
 
-        //warrior talents
-        private void warriorImposeTalents(ref Characters character, string _talents)
-        {
-            switch(_talents)
-            {
-                case "0":
-
-                    break;
-
-                case "1":
-
-                    break;
-
-                case "2":
-
-                    break;
-
-            }            
-        }
-
-        //elementalist talents
-        private void elementalistImposeTalents(ref Characters character, string _talents)
-        {
-            switch (_talents)
-            {
-                case "0":
-
-                    break;
-
-                case "1":
-
-                    break;
-
-                case "2":
-
-                    break;
-
-            }
-        }
 
         //barbarian talents
         private void barbarianImposeTalents(ref Characters character, string _talents)

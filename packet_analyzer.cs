@@ -598,6 +598,7 @@ namespace setup_server
                     List<string> spell_book_list = new List<string>();
                     for (int i = 0; i < pre_spell_book.Length; i++)
                     {
+                        
                         spell_book_list.Add(pre_spell_book[i]);
                     }
 
@@ -607,10 +608,11 @@ namespace setup_server
                     bool isOK = true;
                     for (int i = 0; i < received_spells.Length; i++)
                     {
+                        
                         if (!spell_book_list.Contains(received_spells[i]))
                         {
                             isOK = false;
-                            Console.WriteLine(DateTime.Now + ": spell is not in spell book from - " + endpoint_address);
+                            Console.WriteLine(DateTime.Now + $": spell {received_spells[i]} is not in spell book from - " + endpoint_address);
                             break;
                         }
                     }
