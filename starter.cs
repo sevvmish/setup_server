@@ -12,7 +12,7 @@ namespace setup_server
         public const int passlog_max_lenth = 16;
         public const int charname_min_lenth = 6;
         public const int charname_max_lenth = 16;
-        public const string CLIENT_VERSION = "1.1.0";
+        public const string CLIENT_VERSION = "1.1.1";
         public const int MAX_GAME_HUBS = 4;
         public const string IP_Main_DB_for_Sessions = "31.172.66.150";
 
