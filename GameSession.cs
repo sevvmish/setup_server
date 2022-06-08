@@ -163,7 +163,7 @@ namespace setup_server
             List<string[]> char_d = new List<string[]>(_count);
             List<string[]> char_n = new List<string[]>(_count);
             List<string> pvp_raiting = new List<string>();
-            string new_session_id = functions.get_random_set_of_symb(8);
+            string new_session_id = "z" + functions.get_random_set_of_symb(8);
             
             List<string> new_player_id_aka_ticket = new List<string>(_count);
             List<string> player_old_tickets = new List<string>(_count);
@@ -229,7 +229,9 @@ namespace setup_server
                 string send_table_data = $"0~5~{starter.InnerServerConnectionPassword}~CREATE TABLE `{new_session_id}` (`player_order` int(11), `player_id` varchar(10), `player_name` varchar(20),`player_class` tinyint(4),`pvp_raiting` varchar(25),`team_id` int(1), `game_type_id` int(1),`zone_type` tinyint(2),`position_x` float,`position_y` float,`position_z` float,`rotation_x` float,`rotation_y` float,`rotation_z` float,`speed` float,`animation_id` tinyint(2),`conditions` varchar(255),`health_pool` varchar(13),`energy` float,`health_regen` float,`energy_regen` float,`weapon_attack` varchar(10),`hit_power` float,`armor` float,`shield_block` float,`magic_resistance` float,`dodge` float,`cast_speed` float,`melee_crit` float,`magic_crit` float,`spell_power` float,`spell1` smallint(6),`spell2` smallint(6),`spell3` smallint(6),`spell4` smallint(6),`spell5` smallint(6),`spell6` smallint(6),`hidden_conds` varchar(255),`global_button_cooldown` tinyint(2)) ENGINE = InnoDB DEFAULT CHARSET = utf8; ";
 
                 //CHECK IT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                string res_creating_table = Server.SendAndGetTCP_between_servers(send_table_data, starter.GameServerPort, starter.IP_Main_DB_for_Sessions, true); //Game_hub_IP
+                //string res_creating_table = Server.SendAndGetTCP_between_servers(send_table_data, starter.GameServerPort, starter.IP_Main_DB_for_Sessions, true); //Game_hub_IP
+                bool isTableCreated = mysql.ExecuteSQLInstruction(send_table_data.Split('~')[3]).Result;
+                
                 //Console.WriteLine(res_creating_table + " =========================!");
 
                 //send data to gamehub1 to add players data
@@ -380,7 +382,9 @@ namespace setup_server
                 }
 
                 //CHECK IT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                string res_sending_players_data = Server.SendAndGetTCP_between_servers(send_players_data, starter.GameServerPort, starter.IP_Main_DB_for_Sessions, true);
+                //string res_sending_players_data = Server.SendAndGetTCP_between_servers(send_players_data, starter.GameServerPort, starter.IP_Main_DB_for_Sessions, true);
+                bool isDataAddedToTable = mysql.ExecuteSQLInstruction(send_players_data.Split('~')[3]).Result;
+                
                 //Console.WriteLine(send_players_data + " =========================!");
 
                 //send data to start this session
@@ -389,7 +393,7 @@ namespace setup_server
 
 
                 //preparing awaiting
-                if (res_creating_table == "0~5~ok" && res_sending_players_data == "0~5~ok" && res_starting_new_session == "0~2~1")
+                if (isTableCreated && isDataAddedToTable && res_starting_new_session == "0~2~1")
                 {                                        
                     StringBuilder list_of_chars = new StringBuilder();
 

@@ -12,10 +12,9 @@ namespace setup_server
         public const int passlog_max_lenth = 16;
         public const int charname_min_lenth = 6;
         public const int charname_max_lenth = 16;
-        public const string CLIENT_VERSION = "1.1.1";
+        public const string CLIENT_VERSION = "1.1.11";
         public const int MAX_GAME_HUBS = 4;
-        public const string IP_Main_DB_for_Sessions = "31.172.66.150";
-
+        
         public static byte[] secret_key_for_game_servers;
         public static string InnerServerConnectionPassword;
         public static string MysqlConnectionData_login;
@@ -32,21 +31,25 @@ namespace setup_server
         {            
             data_config.Init_data_config();            
             Thread.Sleep(2000);
-                        
+            
             
             Server.Server_init_TCP_UDP();
+            
+
             Console.ReadKey();
         }
 
         private static async void test()
         {
             await Task.Delay(3000);
-
+            /*
             for (int i = 0; i < 500; i++)
             {
                 Server.SendTCP_between_servers("hjgvfhjgfcvgh", 2328, "----", false);
                 await Task.Delay(50);
             }
+            */
+            
         }
 
 
