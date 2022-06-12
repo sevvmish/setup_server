@@ -598,6 +598,11 @@ namespace setup_server
                             case 5:
                                 looking_for_Any.Add(PlayersAwaiting[keys]);
                                 break;
+
+                            case 6:
+                                GameSessionsAwaiting.Add(new GameSessions(new List<PlayerForGameSession> { PlayersAwaiting[keys] }, GameTypes.training_room, region_id));
+
+                                break;
                         }
                     }
 

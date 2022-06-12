@@ -24,6 +24,31 @@ namespace setup_server
                 string[] packet_data = data.Split('~');
                 //Console.WriteLine(data);
 
+                //cheking feedback  7~6~ticket~answer1~answer2~answer3~answer4~answer5
+                if (packet_data.Length == 8 && (packet_data[0] + packet_data[1]) == "76")
+                {
+                    if (!StringChecker(packet_data[2]) || !StringChecker(packet_data[3]) || !StringChecker(packet_data[4]) || !StringChecker(packet_data[5]) || !StringChecker(packet_data[6]) || !StringChecker(packet_data[7]))
+                    {
+                        Console.WriteLine(DateTime.Now + ": send problem 7~6~wds to user from - " + endpoint_address);
+                        return $"7~6~wds"; //wrong digits or signs                    
+                    }
+
+                    string[,] getUserID = mysql.GetMysqlSelect($"SELECT `user_id` FROM `users` WHERE `ticket_id`='{packet_data[2]}'").Result;
+
+                    if (getUserID.GetLength(0) == 0 || getUserID[0, 0] == "error")
+                    {
+                        return "7~6~err";
+                    }
+
+                    bool result = mysql.ExecuteSQLInstruction($"INSERT INTO `feedback`(`user_id`, `date`, `value`) VALUES ('{getUserID[0, 0]}','{DateTime.Now}','{packet_data[3]}~{packet_data[4]}~{packet_data[5]}~{packet_data[6]}~{packet_data[7]}')").Result;
+
+                    if (!result)
+                    {
+                        return "7~6~err";
+                    }
+
+                    return "7~6~ok";
+                }
 
                 //get current friend list  7~5~ticket~what char?
                 if (packet_data.Length == 4 && (packet_data[0] + packet_data[1]) == "75")
@@ -464,6 +489,9 @@ namespace setup_server
                         case 5:
                             WhatPVP = GameTypes.PVP_any_battle;
                             break;
+                        case 6:
+                            WhatPVP = GameTypes.training_room;
+                            break;
                     }
 
 
@@ -754,10 +782,11 @@ namespace setup_server
                             Server.GameSessionWaitingForResult.Add(_new_session, new GameSessionResults(_new_session));
                         }
                         Server.GameSessionWaitingForResult[_new_session].AddPlayer(Server.PlayersAwaiting[get_char_id]);
-                        Task.Run(() => Server.GameSessionWaitingForResult[_new_session].RegisterNewSessionDataByPlayerID(_new_ticket));
+                        Server.GameSessionWaitingForResult[_new_session].RegisterNewSessionDataByPlayerID(_new_ticket);
 
                         //analysis==========================
                         bool isOK = mysql.ExecuteSQLInstruction($"INSERT INTO `events`(`user_id`, `character_id`, `event_type_id`, `datetime`, `data`) VALUES ((SELECT `user_id` FROM `characters` WHERE `character_id`='{get_char_id}'), '{get_char_id}', '7', '{DateTime.Now}', '{(int)Server.PlayersAwaiting[get_char_id].GetPlayerGameType()}')").Result;
+                           
                         //==================================
 
                         Server.PlayersAwaiting[get_char_id].SetStatusToGONE();

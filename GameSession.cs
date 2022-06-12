@@ -54,6 +54,9 @@ namespace setup_server
         public async void WaitAndMakePlayerReadyStatus()
         {
             int _delayTime = (int)Server.TimeForMakingIsChekedToREADY * 1000;
+
+            if (CurrentPlayers[0].GetPlayerGameType() == GameTypes.training_room) _delayTime = 1;
+
             await Task.Delay(_delayTime);
 
             for (int i = 0; i < CurrentPlayers.Count; i++)
@@ -69,6 +72,7 @@ namespace setup_server
             int _delayTime = 1000;
             await Task.Delay(_delayTime);
 
+            /*
             while(true)
             {
                 bool isOK = true;
@@ -78,21 +82,23 @@ namespace setup_server
                     if (CurrentPlayers[i].GetCurrentPlayerStatus()!=PlayerStatus.isGone)
                     {
                         isOK = false;
+                        Console.WriteLine("somebody is not gone");
                         break;
                     }
                 }
-
+                
                 if (isOK)
                 {
+                    Console.WriteLine("everybody is gone");
                     break;
                 }
 
                 await Task.Delay(500);
             }
+            */
 
-
-            Console.WriteLine(DateTime.Now + ": players deleted and session stopped because to long for waiting");
-
+            //Console.WriteLine(DateTime.Now + ": players deleted and session stopped because to long for waiting");
+            /*
             foreach (string keyInPlayerWaiting in Server.PlayersAwaiting.Keys)
             {
                 if (CurrentPlayers.Contains(Server.PlayersAwaiting[keyInPlayerWaiting]))
@@ -103,6 +109,7 @@ namespace setup_server
 
             Console.WriteLine("game session removed ");
             Server.GameSessionsAwaiting.Remove(this);
+            */
         }
 
         public PlayerStatus GetSessionStatus()
@@ -157,6 +164,10 @@ namespace setup_server
                     break;
                 case 4:
                     game_type_id = 4; //battle royale
+                    break;
+
+                case 6:
+                    game_type_id = 6; //training room
                     break;
             }
 
@@ -240,19 +251,26 @@ namespace setup_server
 
                 int zone_type = 1;
 
-                Random rnd = new Random();
-
-                switch(rnd.Next(1,4))
+                if (game_type_id==1 || game_type_id == 2 || game_type_id == 3)
                 {
-                    case 1: //stone location
-                        zone_type = 1;
-                        break;
-                    case 2: //forest location
-                        zone_type = 2;
-                        break;
-                    case 3: //lava location
-                        zone_type = 3;
-                        break;
+                    Random rnd = new Random();
+
+                    switch (rnd.Next(1, 4))
+                    {
+                        case 1: //stone location
+                            zone_type = 1;
+                            break;
+                        case 2: //forest location
+                            zone_type = 2;
+                            break;
+                        case 3: //lava location
+                            zone_type = 3;
+                            break;
+                    }
+                }
+                else if(game_type_id == 6) //training room
+                {
+                    zone_type = 4;
                 }
 
                 for (int i = 0; i < _count; i++)
@@ -265,6 +283,13 @@ namespace setup_server
                     switch(game_type_id)
                     {
                         case 0: //testing mode
+                            team_id = 0;
+                            x = 0;
+                            z = 0;
+                            rot_y = 180;
+                            break;
+
+                        case 6: //testing room
                             team_id = 0;
                             x = 0;
                             z = 0;
@@ -651,11 +676,13 @@ namespace setup_server
     public enum GameTypes
     {
         PvE_for_test = 0,
-        PvP_1vs1,
-        PvP_2vs2,
-        PvP_3vs3,
-        PvP_battle_royale,
-        PVP_any_battle
+        PvP_1vs1 = 1,
+        PvP_2vs2 = 2,
+        PvP_3vs3 = 3,
+        PvP_battle_royale = 4,
+        PVP_any_battle = 5,
+        training_room = 6
+
                 
     }
     
