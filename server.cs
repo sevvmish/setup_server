@@ -600,7 +600,7 @@ namespace setup_server
                                 break;
 
                             case 6:
-                                GameSessionsAwaiting.Add(new GameSessions(new List<PlayerForGameSession> { PlayersAwaiting[keys] }, GameTypes.training_room, region_id));
+                                //GameSessionsAwaiting.Add(new GameSessions(new List<PlayerForGameSession> { PlayersAwaiting[keys] }, GameTypes.training_room, region_id));
 
                                 break;
                         }

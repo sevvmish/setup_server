@@ -164,11 +164,10 @@ namespace setup_server
                     break;
                 case 4:
                     game_type_id = 4; //battle royale
-                    break;
-
+                    break;                    
                 case 6:
                     game_type_id = 6; //training room
-                    break;
+                    break;                    
             }
 
             List<string[]> char_d = new List<string[]>(_count);

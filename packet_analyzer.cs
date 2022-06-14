@@ -490,8 +490,11 @@ namespace setup_server
                             WhatPVP = GameTypes.PVP_any_battle;
                             break;
                         case 6:
-                            WhatPVP = GameTypes.training_room;
-                            break;
+                            //WhatPVP = GameTypes.training_room;
+                            Server.PlayersAwaiting.Add(char_id[0, 0], new PlayerForGameSession(char_id[0, 0], packet_data[3], packet_data[2], GameTypes.training_room, 0, region_id));
+                            Server.GameSessionsAwaiting.Add(new GameSessions(new List<PlayerForGameSession> { Server.PlayersAwaiting [char_id[0, 0]] }, GameTypes.training_room, region_id));
+                            return $"3~1~ok";
+                            //break;
                     }
 
 
