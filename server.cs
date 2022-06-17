@@ -592,7 +592,7 @@ namespace setup_server
                                 break;
 
                             case 4:
-                                looking_for_BR.Add(PlayersAwaiting[keys]);
+                                //looking_for_BR.Add(PlayersAwaiting[keys]);
                                 break;
 
                             case 5:

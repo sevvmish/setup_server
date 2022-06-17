@@ -12,7 +12,7 @@ namespace setup_server
         public const int passlog_max_lenth = 16;
         public const int charname_min_lenth = 6;
         public const int charname_max_lenth = 16;
-        public const string CLIENT_VERSION = "1.1.11";
+        public const string CLIENT_VERSION = "1.1.2";
         public const int MAX_GAME_HUBS = 4;
         
         public static byte[] secret_key_for_game_servers;
