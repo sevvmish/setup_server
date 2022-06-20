@@ -405,7 +405,7 @@ namespace setup_server
                     }
 
                     //data about visitors==============
-                    functions.AddOrUpdateVisitors(packet_data[2], packet_data[3], get_char_data[0, 0]);
+                    //functions.AddOrUpdateVisitors(packet_data[2], packet_data[3], get_char_data[0, 0]);
                     //================================
 
                     string result = "";
@@ -539,7 +539,7 @@ namespace setup_server
                     }
 
                     //remove visitor
-                    Server.CurrentVisitors.Remove(packet_data[2]);
+                    //Server.CurrentVisitors.Remove(packet_data[2]);
                     //=================
 
                     if (Server.PlayersAwaiting.ContainsKey(char_id[0, 0]) && Server.PlayersAwaiting[char_id[0, 0]].GetCurrentPlayerStatus() != PlayerStatus.isGone /*!Server.PlayersAwaiting[char_id[0, 0]].isPlayerBusyForSession()*/)

@@ -42,6 +42,7 @@ namespace setup_server
         public const float LimitForLonelyPlayerToLoseQueue = 700f;
         public const float TimeForWaitBeforeAddingBot1vs1 = 6f;
         public const float TimeForWaitBeforeAddingBotFor2vs2 = 8f;
+        public const float TimeForWaitBeforeAddingBotFor3vs3 = 12f;
         public const float TimeForWaitBeforeAddingBotForBattleRoyale = 20f;        
         public const float TimeForMakingIsChekedToREADY = 4f;
         public const int HowManyPlayersInBattleRoyale = 8;
@@ -695,6 +696,67 @@ namespace setup_server
                 }
                 //==================================================================================================
 
+                //dealing with 3vs3================================================
+                if (looking_for_6.Count > 5)
+                {
+                    int _count = looking_for_6.Count / 6;
+                    if (_count > 0)
+                    {
+                        for (int i = 0; i < _count; i += 6)
+                        {
+                            GameSessionsAwaiting.Add(new GameSessions(new List<PlayerForGameSession> { looking_for_6[i], looking_for_6[i + 1], looking_for_6[i + 2], looking_for_6[i + 3], looking_for_6[i + 4], looking_for_6[i + 5] }, GameTypes.PvP_3vs3, region_id));
+
+                        }
+                    }
+
+                }
+                else if (looking_for_6.Count >= 3 && looking_for_6.Count <= 5)
+                {
+                    int howManyPlayers = 0;
+                    List<PlayerForGameSession> _temporary3vs3 = new List<PlayerForGameSession>(6);
+
+                    for (int i = 0; i < looking_for_6.Count; i++)
+                    {
+                        _temporary3vs3.Add(looking_for_6[i]);
+                        howManyPlayers++;
+                    }
+
+                    if (howManyPlayers < 6 && looking_for_Any.Count > 0)
+                    {
+                        for (int i = 0; i < looking_for_Any.Count; i++)
+                        {
+                            _temporary3vs3.Add(looking_for_Any[i]);
+                            howManyPlayers++;
+                            if (_temporary3vs3.Count == 6)
+                            {
+                                GameSessionsAwaiting.Add(new GameSessions(_temporary3vs3, GameTypes.PvP_3vs3, region_id));
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (howManyPlayers < 6 && _temporary3vs3[0].WhenStarted().AddSeconds(TimeForWaitBeforeAddingBotFor3vs3) < DateTime.Now)
+                    {
+                        //Console.WriteLine("yes 111111111111111111111111111" + howManyPlayers  + " - " + _temporary3vs3.Count);
+                        int delta = 6 - howManyPlayers;
+                        for (int i = 0; i < delta; i++)
+                        {
+                            //Console.WriteLine("yes 22222222222222222" + howManyPlayers + " - " + _temporary3vs3.Count);
+                            _temporary3vs3.Add(GetBotForPvP(GameTypes.PvP_3vs3));
+                            howManyPlayers++;
+                            if (_temporary3vs3.Count == 6)
+                            {
+                                
+                                GameSessionsAwaiting.Add(new GameSessions(_temporary3vs3, GameTypes.PvP_3vs3, region_id));
+                                break;
+                            }
+                        }
+                    }                   
+                }
+                //==================================================================================================
+
+
+
                 //dealing with Battle Royale============================================================================
                 if (looking_for_BR.Count >= HowManyPlayersInBattleRoyale)
                 {
@@ -753,6 +815,41 @@ namespace setup_server
                 }
                 //=================================
 
+
+
+                //dealing with any game=================================================
+                if (looking_for_Any.Count > 0)
+                {
+                    if (looking_for_Any.Count == 1 && looking_for_Any[0].WhenStarted().AddSeconds(TimeForWaitBeforeAddingBot1vs1) < DateTime.Now)
+                    {
+                        GameSessionsAwaiting.Add(new GameSessions(new List<PlayerForGameSession> { looking_for_Any[0], GetBotForPvP(GameTypes.PvP_1vs1) }, GameTypes.PvP_1vs1, region_id));
+                    }
+                    else if (looking_for_Any.Count >= 4)
+                    {
+                        List<PlayerForGameSession> _temporaryAny = new List<PlayerForGameSession>();
+
+                        for (int i = 0; i < 4; i++)
+                        {
+                            _temporaryAny.Add(looking_for_Any[i]);
+                        }
+
+                        GameSessionsAwaiting.Add(new GameSessions(_temporaryAny, GameTypes.PvP_2vs2, region_id));
+                    }
+                    else
+                    {
+                        List<PlayerForGameSession> _temporaryAny = new List<PlayerForGameSession>();
+
+                        for (int i = 0; i < 2; i++)
+                        {
+                            _temporaryAny.Add(looking_for_Any[i]);
+                        }
+
+                        GameSessionsAwaiting.Add(new GameSessions(_temporaryAny, GameTypes.PvP_1vs1, region_id));
+                    }
+
+                }
+                
+                //================================================================
 
 
             }
@@ -1080,9 +1177,6 @@ namespace setup_server
                     t[i] = buffer[i];
                 }
 
-
-                //Console.WriteLine("received " + data_result);
-
                 IncomingDataHadler.HandleIncomingUDP(endpoint, t);
             }
 
@@ -1155,7 +1249,7 @@ namespace setup_server
             address = _address;
         }
 
-        public string GetCharacter
+        public string GetCharacterName
         {
             get
             {

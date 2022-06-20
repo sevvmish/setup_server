@@ -203,11 +203,33 @@ namespace setup_server
                     string res = Encoding.UTF8.GetString(buffer, 0, buffer.Length);
                     string[] packet = res.Split('~');
 
+               
                     //just pinging 7~0~ticket(3)~char(4)
-                    if (packet[1] == "7" && packet[2] == "0" && Server.CurrentVisitors.ContainsKey(packet[3]) && Server.CurrentVisitors[packet[3]].GetCharacter == packet[4])
+                    if (packet[1] == "7" && packet[2] == "0")
                     {
-                        Server.CurrentVisitors[packet[3]].Update();
-                        Server.CurrentVisitors[packet[3]].SetAddress(endpoint);
+                        if (Server.CurrentVisitors.ContainsKey(packet[3]) && Server.CurrentVisitors[packet[3]].GetCharacterName == packet[4])
+                        {
+                            Server.CurrentVisitors[packet[3]].Update();
+                            Server.CurrentVisitors[packet[3]].SetAddress(endpoint);
+                        }
+                        else if(!Server.CurrentVisitors.ContainsKey(packet[3]))
+                        {
+                        
+                            string[,] get_char_data = mysql.GetMysqlSelect($"SELECT characters.character_id FROM characters WHERE characters.character_name = '{packet[4]}'").Result;
+
+                            if (get_char_data.GetLength(0) == 0 || get_char_data[0, 0] == "error")
+                            {
+                                return;
+                            }
+
+                            //data about visitors==============
+                            functions.AddOrUpdateVisitors(packet[3], packet[4], get_char_data[0, 0]);
+                            //================================
+
+                            Server.CurrentVisitors[packet[3]].Update();
+                            Server.CurrentVisitors[packet[3]].SetAddress(endpoint);
+                        }
+
                     }
 
 

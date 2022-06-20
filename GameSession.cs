@@ -18,7 +18,7 @@ namespace setup_server
         public GameSessions(List<PlayerForGameSession> _current_players, GameTypes _gameType, int _region)
         {
             region_id = _region;
-           
+            Console.WriteLine("33333333333333333333333");
             for (int i = 0; i < _current_players.Count; i++)
             {
                 _current_players[i].SetPlayerGameType(_gameType);
@@ -73,44 +73,7 @@ namespace setup_server
             int _delayTime = 1000;
             await Task.Delay(_delayTime);
 
-            /*
-            while(true)
-            {
-                bool isOK = true;
-
-                for (int i = 0; i < CurrentPlayers.Count; i++)
-                {
-                    if (CurrentPlayers[i].GetCurrentPlayerStatus()!=PlayerStatus.isGone)
-                    {
-                        isOK = false;
-                        Console.WriteLine("somebody is not gone");
-                        break;
-                    }
-                }
-                
-                if (isOK)
-                {
-                    Console.WriteLine("everybody is gone");
-                    break;
-                }
-
-                await Task.Delay(500);
-            }
-            */
-
-            //Console.WriteLine(DateTime.Now + ": players deleted and session stopped because to long for waiting");
-            /*
-            foreach (string keyInPlayerWaiting in Server.PlayersAwaiting.Keys)
-            {
-                if (CurrentPlayers.Contains(Server.PlayersAwaiting[keyInPlayerWaiting]))
-                {
-                    Server.PlayersAwaiting.Remove(keyInPlayerWaiting);
-                }
-            }
-
-            Console.WriteLine("game session removed ");
-            Server.GameSessionsAwaiting.Remove(this);
-            */
+  
         }
 
         public PlayerStatus GetSessionStatus()
@@ -351,6 +314,58 @@ namespace setup_server
                             }
                             break;
 
+                        case 3: //PvP 3vs3
+                            if (i < 3)
+                            {
+                                team_id = 0;
+
+                                switch(i)
+                                {
+                                    case 0:
+                                        x = -10;
+                                        z = -2;
+                                        rot_y = 90;
+                                        break;
+                                    case 1:
+                                        x = -10;
+                                        z = 2;
+                                        rot_y = 90;
+                                        break;
+                                    case 2:
+                                        x = -11;
+                                        z = 0;
+                                        rot_y = 90;
+                                        break;
+                                }
+
+                           
+                            }
+                            else
+                            {
+                                team_id = 1;
+
+                                switch (i)
+                                {
+                                    case 3:
+                                        x = 10;
+                                        z = 2;
+                                        rot_y = 270;
+                                        break;
+                                    case 4:
+                                        x = 10;
+                                        z = -2;
+                                        rot_y = 270;
+                                        break;
+                                    case 5:
+                                        x = 11;
+                                        z = 0;
+                                        rot_y = 270;
+                                        break;
+                                }
+
+                            }
+                            break;
+
                         case 4:
                             team_id = i;
                             switch(i)
@@ -451,8 +466,7 @@ namespace setup_server
                 Console.WriteLine("==============ERROR================\n" + ex + "\n" + DateTime.Now + "\n" + "==================ERROR_END===========\n");
                 return false;
             }
-
-            return false;
+                        
 
         }
 
