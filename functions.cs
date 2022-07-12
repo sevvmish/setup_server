@@ -21,6 +21,11 @@ namespace setup_server
             return result;
         }
 
+        public static ushort GetRandomUShort()
+        {
+            Random rnd = new Random();
+            return (ushort)rnd.Next(10000, 65500);
+        }
 
         public static string GetTicketByCharID(string charID)
         {

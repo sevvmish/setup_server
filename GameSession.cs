@@ -18,7 +18,7 @@ namespace setup_server
         public GameSessions(List<PlayerForGameSession> _current_players, GameTypes _gameType, int _region)
         {
             region_id = _region;
-            Console.WriteLine("33333333333333333333333");
+            
             for (int i = 0; i < _current_players.Count; i++)
             {
                 _current_players[i].SetPlayerGameType(_gameType);
@@ -137,7 +137,7 @@ namespace setup_server
             List<string[]> char_d = new List<string[]>(_count);
             List<string[]> char_n = new List<string[]>(_count);
             List<string> pvp_raiting = new List<string>();
-            string new_session_id = "z" + functions.get_random_set_of_symb(8);
+            ushort new_session_id = functions.GetRandomUShort();
             
             List<string> new_player_id_aka_ticket = new List<string>(_count);
             List<string> player_old_tickets = new List<string>(_count);
@@ -186,9 +186,9 @@ namespace setup_server
                     {
                         pvp_raiting.Add(pvp_r[0, 0]);
                     }
-                                      
 
-                    string _new_tickets = functions.get_random_set_of_symb(8);
+
+                    string _new_tickets = functions.GetRandomUShort().ToString();
 
                     new_player_id_aka_ticket.Add(_new_tickets);
                     CurrentPlayers[i].SetNewTicketForPlayer(_new_tickets);
@@ -480,7 +480,7 @@ namespace setup_server
         private string Character_ID;
         private string CharacterName;
         private string CharacterTicket;
-        private string CharacterNewSession;
+        private ushort CharacterNewSession;
         private string CharacterNewTicket;
         private DateTime WhenEnteredToSearchGame;
         private DateTime WhenLastUpdateSignal;
@@ -666,14 +666,14 @@ namespace setup_server
             CurrentPlayerStatus = PlayerStatus.isGone;            
         }
 
-        public void SetNewSession(string _session)
+        public void SetNewSession(ushort _session)
         {
             CharacterNewSession = _session;
         }
 
         public string GetNewSession()
         {
-            return CharacterNewSession;
+            return CharacterNewSession.ToString();
         }
 
         public void SetGameHub(string _game_hub)
@@ -697,9 +697,10 @@ namespace setup_server
         PvP_3vs3 = 3,
         PvP_battle_royale = 4,
         PVP_any_battle = 5,
-        training_room = 6
+        training_room = 6,
+        tournament_lobby = 101
 
-                
+
     }
     
     public enum PlayerStatus

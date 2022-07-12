@@ -40,7 +40,8 @@ namespace setup_server
             elementalist = 2,
             barbarian = 3,
             rogue = 4,
-            wizard = 5
+            wizard = 5,
+            gunslinger = 6
         }
 
                 
@@ -49,52 +50,7 @@ namespace setup_server
         {
             Characters character = CreateDefaultCharacter(playerType, _talents);
 
-            /*
-            try
-            {
-                //check if spell doesnt match spell book
-                List<string> spell_book = character.spell_book.Split(',').ToList();
-                List<string> original_spells = spells.ToList();
-
-               
-
-                for (int i = 0; i < original_spells.Count; i++)
-                {
-                    if (!spell_book.Contains(original_spells[i]))
-                    {
-                        original_spells[i] = "0";
-                    }
-                }
-
-                //replace 0 with spells
-                for (int i = 0; i < original_spells.Count; i++)
-                {
-                    if (original_spells[i]=="0")
-                    {
-                        for (int u = 0; u < spell_book.Count; u++)
-                        {
-                            if (spell_book[u]!="0" && !original_spells.Contains(spell_book[u]))
-                            {
-                                original_spells[i] = spell_book[u];
-                                break;
-                            }
-                        }
-                    }
-                }
-                //============================
-
-                character.spell1 = int.Parse(original_spells[0]);
-                character.spell2 = int.Parse(original_spells[1]);
-                character.spell3 = int.Parse(original_spells[2]);
-                character.spell4 = int.Parse(original_spells[3]);
-                character.spell5 = int.Parse(original_spells[4]);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
-            }
-            */
-
+       
             return $"UPDATE `character_property` SET {getPlayerCharacteristicsInSQLReadyStringFormatForUpdate(character)} WHERE `character_id`= (SELECT characters.character_id FROM characters WHERE characters.character_name = '{char_name}')";
         }
 
@@ -189,7 +145,22 @@ namespace setup_server
                     }
                     
                     return character;
-                
+
+                case 6: //gunslinger
+                    switch (newTalents)
+                    {
+                        case "0":
+                            return new Characters(1, 240, 1, 1, "1-1", 1, 20, 0, 1, 1, 10, 1, 10, 21, 201, 221, 207, 220, 210, 215, "", "0,201,203,204,205,206,207,210,212,214,218,219,220,221,222,223", newTalents);
+
+                        case "1":
+                            return new Characters(1, 240, 1, 1, "1-1", 1, 20, 0, 1, 1, 5, 1, 10, 17, 221, 212, 207, 219, 205, 209, "", "0,201,203,204,205,206,207,208,210,212,214,217,218,219,220,221,222,223,227", newTalents);
+
+                        case "2":
+                            return new Characters(1, 240, 1, 1, "1-1", 1, 20, 0, 1, 1, 5, 1, 10, 17, 221, 208, 217, 227, 222, 202, "", "0,201,203,204,205,206,207,208,210,212,214,217,218,219,220,221,222,223,227,228", newTalents);
+                    }
+
+                    return character;
+
 
             }
 
@@ -242,68 +213,6 @@ namespace setup_server
                 $"`dodge`= '{character.dodge.ToString("f1").Replace(',', '.')}', `cast_speed`= '{character.cast_speed.ToString("f1").Replace(',', '.')}', `melee_crit`= '{character.melee_crit.ToString("f1").Replace(',', '.')}', `magic_crit`= '{character.magic_crit.ToString("f1").Replace(',', '.')}'," +
                 $"`spell_power`= '{character.spell_power.ToString("f1").Replace(',', '.')}', `spell1`= '{character.spell1}', `spell2`= '{character.spell2}', `spell3`= '{character.spell3}', `spell4`= '{character.spell4}', `spell5`= '{character.spell5}', `spell6`= '{character.spell6}', `hidden_conds`= '{character.hidden_conds}', `spell_book`= '{character.spell_book}', `talents`= '{character.talents}' ";
         }
-
-
-        //barbarian talents
-        private void barbarianImposeTalents(ref Characters character, string _talents)
-        {
-            switch (_talents)
-            {
-                case "0":
-
-                    break;
-
-                case "1":
-
-                    break;
-
-                case "2":
-
-                    break;
-
-            }
-        }
-
-        //rogue talents
-        private void rogueImposeTalents(ref Characters character, string _talents)
-        {
-            switch (_talents)
-            {
-                case "0":
-
-                    break;
-
-                case "1":
-
-                    break;
-
-                case "2":
-
-                    break;
-
-            }
-        }
-
-        //wizard talents
-        private void wizardImposeTalents(ref Characters character, string _talents)
-        {
-            switch (_talents)
-            {
-                case "0":
-
-                    break;
-
-                case "1":
-
-                    break;
-
-                case "2":
-
-                    break;
-
-            }
-        }
-
 
 
     }
